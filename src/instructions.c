@@ -129,6 +129,42 @@ int sty(cpu6502 *cpu, Operand op) {
   return 0;
 }
 
+int tax(cpu6502 *cpu, Operand op) {
+  cpu->X = cpu->A;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->X == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int tay(cpu6502 *cpu, Operand op) {
+  cpu->Y = cpu->A;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->Y & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->Y == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int txa(cpu6502 *cpu, Operand op) {
+  cpu->A = cpu->X;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int tya(cpu6502 *cpu, Operand op) {
+  cpu->A = cpu->Y;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  return 0;
+}
+
 int nop(cpu6502 *cpu __attribute__((unused)), Operand op __attribute__((unused))) {
   return 0;
 }
