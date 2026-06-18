@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -std=c11 -Iinclude
+CFLAGS = -Wall -Wextra -Wpedantic -std=c11 -Iinclude -Isrc
 
 SRC = $(wildcard src/*.c)
 TEST_SRC = $(wildcard test/*.c)

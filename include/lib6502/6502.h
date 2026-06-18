@@ -25,8 +25,8 @@ void cpu6502_init(
     void *ctx
 );
 
-void cpu6502_reset(cpu6502 *cpu);
+int cpu6502_reset(cpu6502 *cpu);
 
-void cpu6502_step(cpu6502 *cpu);
+int cpu6502_step(cpu6502 *cpu);
 
 #endif // LIB6502_6502_H

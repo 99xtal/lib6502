@@ -1,15 +1,8 @@
 #include <stdint.h>
 #include <lib6502/6502.h>
 
-/** Processor status flags */
-#define FLAG_CARRY (1 << 0)                 // Set if the last operation resulted in a carry out of the most significant bit
-#define FLAG_ZERO (1 << 1)                  // Set if the last operation resulted in a zero value
-#define FLAG_INTERRUPT_DISABLE (1 << 2)     // Set if interrupts are disabled
-#define FLAG_DECIMAL_MODE (1 << 3)          // Set if the CPU is in decimal mode (BCD)
-#define FLAG_BREAK (1 << 4)                 // Set if the last operation was a BRK instruction
-#define FLAG_UNUSED (1 << 5)                // Unused flag, always set
-#define FLAG_OVERFLOW (1 << 6)              // Set if the last operation resulted in an overflow
-#define FLAG_NEGATIVE (1 << 7)              // Set if the last operation resulted in a negative value (most significant bit set)
+#include "flags.h"
+#include "opcodes.h"
 
 /** Memory vector addresses */
 #define VECTOR_NMI_LOW 0xFFFA               // Address of the low byte of the non-maskable interrupt vector
@@ -37,24 +30,30 @@ void cpu6502_init(cpu6502 *cpu, cpu6502_read_fn read, cpu6502_write_fn write, vo
     cpu->ctx = ctx;
 }
 
-void cpu6502_reset(cpu6502 *cpu) {
+int cpu6502_reset(cpu6502 *cpu) {
+    int clock_cycles = 7;
     uint16_t reset_position = read_vector(cpu, VECTOR_RESET_LOW);
 
     cpu->SP = 0xFD; // Reset stack pointer to 0x01FD
     cpu->PC = reset_position;
+
+    return clock_cycles;
 }
 
-void cpu6502_step(cpu6502 *cpu) {
-    uint8_t opcode = cpu->read(cpu->ctx, cpu->PC);
+int cpu6502_step(cpu6502 *cpu) {
+    uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC);
+    cpu->PC++;
 
-    // For now, we will just increment the program counter to simulate a NOP instruction
-    cpu->PC += 1;
-}
+    Opcode opcode = opcode_table[opcode_byte];
 
-void set_flag(cpu6502 *cpu, uint8_t flag, uint8_t value) {
-    if (value) {
-        cpu->status |= flag;
-    } else {
-        cpu->status &= ~flag;
+    Operand op = opcode.address(cpu);
+    int extra_cycles = opcode.execute(cpu, op);
+
+    int cycles = opcode.cycles + extra_cycles;
+
+    if (op.page_crossed) {
+        cycles += opcode.page_cross_penalty;
     }
+
+    return cycles;
 }
