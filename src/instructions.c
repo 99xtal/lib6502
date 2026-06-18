@@ -168,3 +168,51 @@ int tya(cpu6502 *cpu, Operand op) {
 int nop(cpu6502 *cpu __attribute__((unused)), Operand op __attribute__((unused))) {
   return 0;
 }
+
+int tsx(cpu6502 *cpu, Operand op) {
+  cpu->X = cpu->SP;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->X == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int tsx(cpu6502 *cpu, Operand op) {
+  cpu->SP = cpu->X;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->SP & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->SP == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int pha(cpu6502 *cpu, Operand op) {
+  stack_push_u8(cpu, cpu->A);
+
+  return 0;
+}
+
+int php(cpu6502 *cpu, Operand op) {
+  stack_push_u8(cpu, cpu->status);
+
+  return 0;
+}
+
+int pla(cpu6502 *cpu, Operand op) {
+  cpu->A = stack_pop_u8(cpu);
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int plp(cpu6502 *cpu, Operand op) {
+  cpu->status = stack_pop_u8(cpu);
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->status & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->status == 0 ? 1 : 0);
+
+  return 0;
+}
