@@ -4,8 +4,10 @@
 #include "opcodes.h"
 
 const Opcode opcode_table[256] = {
+  [0x00] = { .execute = brk, .address = addr_implied, .cycles = 7, .page_cross_penalty = 0 },
   [0x18] = { .execute = clc, .address = addr_implied, .cycles = 2, .page_cross_penalty = 0 },
   [0x38] = { .execute = sec, .address = addr_implied, .cycles = 2, .page_cross_penalty = 0 },
+  [0x40] = { .execute = rti, .address = addr_implied, .cycles = 6, .page_cross_penalty = 0 },
   [0x58] = { .execute = cli, .address = addr_implied, .cycles = 2, .page_cross_penalty = 0 },
   [0x78] = { .execute = sei, .address = addr_implied, .cycles = 2, .page_cross_penalty = 0 },
   [0xA1] = { .execute = lda, .address = addr_indirect_x, .cycles = 6, .page_cross_penalty = 0 },

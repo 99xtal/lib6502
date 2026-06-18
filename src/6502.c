@@ -3,20 +3,7 @@
 
 #include "flags.h"
 #include "opcodes.h"
-
-/** Memory vector addresses */
-#define VECTOR_NMI_LOW 0xFFFA               // Address of the low byte of the non-maskable interrupt vector
-#define VECTOR_NMI_HIGH 0xFFFB              // Address of the high byte of the NMI vector
-#define VECTOR_RESET_LOW 0xFFFC             // Address of the low byte of the reset vector
-#define VECTOR_RESET_HIGH 0xFFFD            // Address of the high byte of the reset vector
-#define VECTOR_IRQ_LOW 0xFFFE               // Address of the low byte of the IRQ/BRK vector
-#define VECTOR_IRQ_HIGH 0xFFFF              // Address of the high byte of the IRQ/BRK vector
-
-uint16_t read_vector(cpu6502 *cpu, uint16_t vector_address) {
-    uint8_t low_byte = cpu->read(cpu->ctx, vector_address);
-    uint8_t high_byte = cpu->read(cpu->ctx, vector_address + 1);
-    return ((uint16_t)high_byte << 8) | low_byte;
-}
+#include "vectors.h"
 
 void cpu6502_init(cpu6502 *cpu, cpu6502_read_fn read, cpu6502_write_fn write, void *ctx) {
     cpu->A = 0;
@@ -32,7 +19,7 @@ void cpu6502_init(cpu6502 *cpu, cpu6502_read_fn read, cpu6502_write_fn write, vo
 
 int cpu6502_reset(cpu6502 *cpu) {
     int clock_cycles = 7;
-    uint16_t reset_position = read_vector(cpu, VECTOR_RESET_LOW);
+    uint16_t reset_position = read_vector(cpu, VECTOR_RESET);
 
     cpu->SP = 0xFD; // Reset stack pointer to 0x01FD
     cpu->PC = reset_position;

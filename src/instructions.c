@@ -1,6 +1,43 @@
 #include <lib6502/6502.h>
 #include "flags.h"
 #include "opcodes.h"
+#include "stack.h"
+#include "vectors.h"
+
+int brk(cpu6502 *cpu, Operand op __attribute__((unused))) {
+  cpu->PC++;
+
+  stack_push_u16(cpu, cpu->PC);
+
+  uint8_t status = cpu->status;
+  status |= FLAG_BREAK;
+  status |= FLAG_UNUSED;   // bit 5 is usually always pushed as 1
+
+  stack_push_u8(cpu, status);
+  
+  set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
+  cpu->PC = read_vector(cpu, VECTOR_IRQ);
+
+  return 0;
+}
+
+int rti(cpu6502 *cpu, Operand op) {
+  (void)op;
+
+  cpu->status = stack_pop_u8(cpu);
+
+  /*
+    Bit 5 is conventionally always treated as set in the status register.
+    The break flag is not a real internal CPU latch in quite the same way,
+    so many emulators normalize these bits after pulling P.
+  */
+  cpu->status &= ~FLAG_BREAK;
+  cpu->status |= FLAG_UNUSED;
+
+  cpu->PC = stack_pop_u16(cpu);
+
+  return 0;
+}
 
 int clc(cpu6502 *cpu __attribute__((unused)), Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_CARRY, 0);
