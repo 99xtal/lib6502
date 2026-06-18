@@ -4,6 +4,46 @@
 #include "stack.h"
 #include "vectors.h"
 
+int and(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  cpu->A &= value;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int eor(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  cpu->A ^= value;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int ora(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  cpu->A |= value;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int bit(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  set_flag(cpu, FLAG_ZERO, (cpu->A & value) == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (value & 0x80) != 0);
+  set_flag(cpu, FLAG_OVERFLOW, (value & 0x40) != 0);
+
+  return 0;
+}
+
 int brk(cpu6502 *cpu, Operand op __attribute__((unused))) {
   cpu->PC++;
 
@@ -178,11 +218,8 @@ int tsx(cpu6502 *cpu, Operand op) {
   return 0;
 }
 
-int tsx(cpu6502 *cpu, Operand op) {
+int txs(cpu6502 *cpu, Operand op) {
   cpu->SP = cpu->X;
-
-  set_flag(cpu, FLAG_NEGATIVE, (cpu->SP & 0x80) != 0);
-  set_flag(cpu, FLAG_ZERO, cpu->SP == 0 ? 1 : 0);
 
   return 0;
 }
@@ -210,9 +247,6 @@ int pla(cpu6502 *cpu, Operand op) {
 
 int plp(cpu6502 *cpu, Operand op) {
   cpu->status = stack_pop_u8(cpu);
-
-  set_flag(cpu, FLAG_NEGATIVE, (cpu->status & 0x80) != 0);
-  set_flag(cpu, FLAG_ZERO, cpu->status == 0 ? 1 : 0);
 
   return 0;
 }

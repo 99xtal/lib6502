@@ -26,6 +26,11 @@ int php(cpu6502 *cpu, Operand op);  // Push processor status on stack
 int pla(cpu6502 *cpu, Operand op);  // Pull accumulator from stack
 int plp(cpu6502 *cpu, Operand op);  // Pull processor status from stack
 
+/** Logical */
+int and(cpu6502 *cpu, Operand op);  // Logical AND
+int eor(cpu6502 *cpu, Operand op);  // Exclusive OR
+int ora(cpu6502 *cpu, Operand op);  // Logical Inclusive OR
+int bit(cpu6502 *cpu, Operand op);  // Bit Test
 
 /** Status Flag Changes */
 int clc(cpu6502 *cpu, Operand op);  // Clear carry flag
