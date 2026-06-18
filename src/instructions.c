@@ -250,3 +250,80 @@ int plp(cpu6502 *cpu, Operand op) {
 
   return 0;
 }
+
+int adc(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
+
+  uint16_t sum = (uint16_t)cpu->A + value + carry_in;
+  uint8_t result = (uint8_t)sum;
+
+  set_flag(cpu, FLAG_CARRY, sum > 0xFF);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  // Overflow happens when A and value have the same sign,
+  // but the result has a different sign.
+  set_flag(cpu, FLAG_OVERFLOW,
+      (~(cpu->A ^ value) & (cpu->A ^ result) & 0x80) != 0
+  );
+
+  cpu->A = result;
+
+  return 0;
+}
+
+int sbc(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t carry = get_flag(cpu, FLAG_CARRY);
+
+  uint16_t result = (uint16_t)cpu->A + (uint8_t)(~value) + carry;
+  uint8_t final = (uint8_t)result;
+
+  set_flag(cpu, FLAG_CARRY, result > 0xFF);
+  set_flag(cpu, FLAG_ZERO, final == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (final & 0x80) != 0);
+
+  // Overflow happens when A and value have the same sign,
+  // but the result has a different sign.
+  set_flag(cpu, FLAG_OVERFLOW,
+      (~(cpu->A ^ value) & (cpu->A ^ final) & 0x80) != 0
+  );
+
+  cpu->A = result;
+
+  return 0;
+}
+
+int cmp(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t result = (uint16_t)cpu->A - value;
+
+  set_flag(cpu, FLAG_CARRY, cpu->A >= value);
+  set_flag(cpu, FLAG_ZERO, cpu->A == value);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}
+
+int cpx(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t result = (uint16_t)cpu->X - value;
+
+  set_flag(cpu, FLAG_CARRY, cpu->X >= value);
+  set_flag(cpu, FLAG_ZERO, cpu->X == value);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}
+
+int cpy(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t result = (uint16_t)cpu->Y - value;
+
+  set_flag(cpu, FLAG_CARRY, cpu->Y >= value);
+  set_flag(cpu, FLAG_ZERO, cpu->Y == value);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}

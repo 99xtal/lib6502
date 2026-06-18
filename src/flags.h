@@ -17,4 +17,6 @@ typedef enum {
 
 void set_flag(cpu6502 *cpu, StatusFlag flag, uint8_t value);
 
+uint8_t get_flag(cpu6502 *cpu, StatusFlag flag);
+
 #endif // FLAGS_H

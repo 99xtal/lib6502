@@ -8,3 +8,7 @@ void set_flag(cpu6502 *cpu, StatusFlag flag, uint8_t value) {
   else
     cpu->status &= ~flag;
 }
+
+uint8_t get_flag(cpu6502 *cpu, StatusFlag flag) {
+  return (cpu->status & flag) != 0;
+}

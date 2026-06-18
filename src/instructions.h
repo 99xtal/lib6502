@@ -32,6 +32,13 @@ int eor(cpu6502 *cpu, Operand op);  // Exclusive OR
 int ora(cpu6502 *cpu, Operand op);  // Logical Inclusive OR
 int bit(cpu6502 *cpu, Operand op);  // Bit Test
 
+/** Arithmetic */
+int adc(cpu6502 *cpu, Operand op);  // Add with Carry
+int sbc(cpu6502 *cpu, Operand op);  // Subtract with Carry
+int cmp(cpu6502 *cpu, Operand op);  // Compare accumulator
+int cpx(cpu6502 *cpu, Operand op);  // Compare X register
+int cpy(cpu6502 *cpu, Operand op);  // Compare Y register
+
 /** Status Flag Changes */
 int clc(cpu6502 *cpu, Operand op);  // Clear carry flag
 int cld(cpu6502 *cpu, Operand op);  // Clear decimal mode flag
