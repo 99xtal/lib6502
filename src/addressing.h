@@ -20,6 +20,8 @@ Operand addr_zero_page(cpu6502 *cpu);
 
 Operand addr_zero_page_x(cpu6502 *cpu);
 
+Operand addr_zero_page_y(cpu6502 *cpu);
+
 Operand addr_implied(cpu6502 *cpu);
 
 #endif // ADDRESSING_H

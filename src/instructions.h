@@ -4,6 +4,14 @@
 #include <lib6502/6502.h>
 #include "opcodes.h"
 
+/** Load/Store Operations */
+int lda(cpu6502 *cpu, Operand op);  // Load accumulator
+int ldx(cpu6502 *cpu, Operand op);  // Load X register
+int ldy(cpu6502 *cpu, Operand op);  // Load Y register
+int sta(cpu6502 *cpu, Operand op);  // Store accumulator
+int stx(cpu6502 *cpu, Operand op);  // Store X register
+int sty(cpu6502 *cpu, Operand op);  // Store Y register
+
 /** Status Flag Changes */
 int clc(cpu6502 *cpu, Operand op);  // Clear carry flag
 int cld(cpu6502 *cpu, Operand op);  // Clear decimal mode flag
@@ -17,9 +25,6 @@ int sei(cpu6502 *cpu, Operand op);  // Set interrupt disable flag
 int brk(cpu6502 *cpu, Operand op);  // Force an interrupt
 int nop(cpu6502 *cpu, Operand op);  // No operation
 int rti(cpu6502 *cpu, Operand op);  // Return from interrupt
-
-
-int lda(cpu6502 *cpu, Operand op);
 
 
 #endif // INSTRUCTIONS_H

@@ -97,6 +97,16 @@ Operand addr_zero_page_x(cpu6502 *cpu) {
   };
 }
 
+Operand addr_zero_page_y(cpu6502 *cpu) {
+  uint8_t base = cpu->read(cpu->ctx, cpu->PC++);
+  uint8_t addr = base + cpu->Y;
+
+  return (Operand) {
+    .addr = addr,
+    .page_crossed = 0
+  };
+}
+
 Operand addr_implied(cpu6502 *cpu __attribute__((unused))) {
   return (Operand) { 
     .addr = 0,

@@ -2,7 +2,7 @@
 
 #include "flags.h"
 
- void set_flag(cpu6502 *cpu, StatusFlag flag, uint8_t value) {
+void set_flag(cpu6502 *cpu, StatusFlag flag, uint8_t value) {
   if (value)
     cpu->status |= flag;
   else
