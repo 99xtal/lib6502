@@ -349,3 +349,61 @@ int rts(cpu6502 *cpu, Operand op __attribute__((unused))) {
 
   return 0;
 }
+
+int inc(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t result = value + 1;
+  cpu->write(cpu->ctx, op.addr, result);
+
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}
+
+int inx(cpu6502 *cpu, Operand op __attribute__((unused))) {
+  cpu->X++;
+
+  set_flag(cpu, FLAG_ZERO, cpu->X == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
+  
+  return 0;
+}
+
+int iny(cpu6502 *cpu, Operand op __attribute__((unused))) {
+  cpu->Y++;
+
+  set_flag(cpu, FLAG_ZERO, cpu->Y == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->Y & 0x80) != 0);
+  
+  return 0;
+}
+
+int dec(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t result = value - 1;
+  cpu->write(cpu->ctx, op.addr, result);
+
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}
+
+int dex(cpu6502 *cpu, Operand op __attribute__((unused))) {
+  cpu->X--;
+
+  set_flag(cpu, FLAG_ZERO, cpu->X == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
+  
+  return 0;
+}
+
+int dey(cpu6502 *cpu, Operand op __attribute__((unused))) {
+  cpu->Y--;
+
+  set_flag(cpu, FLAG_ZERO, cpu->Y == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->Y & 0x80) != 0);
+  
+  return 0;
+}

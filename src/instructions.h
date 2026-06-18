@@ -39,6 +39,19 @@ int cmp(cpu6502 *cpu, Operand op);  // Compare accumulator
 int cpx(cpu6502 *cpu, Operand op);  // Compare X register
 int cpy(cpu6502 *cpu, Operand op);  // Compare Y register
 
+/** Increments & Decrements */
+int inc(cpu6502 *cpu, Operand op);  // Increment a memory location
+int inx(cpu6502 *cpu, Operand op);  // Increment the X register
+int iny(cpu6502 *cpu, Operand op);  // Increment the Y register
+int dec(cpu6502 *cpu, Operand op);  // Decrement a memory location
+int dex(cpu6502 *cpu, Operand op);  // Decrement the X register
+int dey(cpu6502 *cpu, Operand op);  // Decrement the Y register
+
+/** Jumps & Calls */
+int jmp(cpu6502 *cpu, Operand op);  // Jump to another location
+int jsr(cpu6502 *cpu, Operand op);  // Jump to a subroutine
+int rts(cpu6502 *cpu, Operand op);  // Return from subroutine
+
 /** Status Flag Changes */
 int clc(cpu6502 *cpu, Operand op);  // Clear carry flag
 int cld(cpu6502 *cpu, Operand op);  // Clear decimal mode flag
@@ -47,12 +60,6 @@ int clv(cpu6502 *cpu, Operand op);  // Clear overflow flag
 int sec(cpu6502 *cpu, Operand op);  // Set carry flag
 int sed(cpu6502 *cpu, Operand op);  // Set decimal mode flag
 int sei(cpu6502 *cpu, Operand op);  // Set interrupt disable flag
-
-/** Jumps & Calls */
-int jmp(cpu6502 *cpu, Operand op);  // Jump to another location
-int jsr(cpu6502 *cpu, Operand op);  // Jump to a subroutine
-int rts(cpu6502 *cpu, Operand op);  // Return from subroutine
-
 
 /** System Functions */
 int brk(cpu6502 *cpu, Operand op);  // Force an interrupt
