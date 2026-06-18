@@ -113,3 +113,32 @@ Operand addr_implied(cpu6502 *cpu __attribute__((unused))) {
     .page_crossed = 0
   };
 }
+
+Operand addr_indirect(cpu6502 *cpu) {
+  uint8_t ptr_low  = cpu->read(cpu->ctx, cpu->PC++);
+  uint8_t ptr_high = cpu->read(cpu->ctx, cpu->PC++);
+
+  uint16_t ptr = ((uint16_t)ptr_high << 8) | ptr_low;
+
+  uint8_t target_low = cpu->read(cpu->ctx, ptr);
+
+  /**
+   * Original 6502 JMP ($xxxx) bug.
+   *
+   * The CPU incorrectly wraps the high-byte fetch within the same page.
+   *
+   * Example:
+   *   JMP ($30FF)
+   *   low byte  = memory[$30FF]
+   *   high byte = memory[$3000]  // should be $3100
+   */
+  uint16_t target_high_addr =
+    (ptr & 0xFF00) | ((ptr + 1) & 0x00FF);
+
+  uint8_t target_high = cpu->read(cpu->ctx, target_high_addr);
+
+  return (Operand) {
+    .addr = ((uint16_t)target_high << 8) | target_low,
+    .page_crossed = 0
+  };
+}

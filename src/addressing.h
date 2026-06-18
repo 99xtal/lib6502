@@ -12,6 +12,8 @@ Operand addr_abs_x(cpu6502 *cpu);
 
 Operand addr_abs_y(cpu6502 *cpu);
 
+Operand addr_indirect(cpu6502 *cpu);
+
 Operand addr_indirect_x(cpu6502 *cpu);
 
 Operand addr_indirect_y(cpu6502 *cpu);

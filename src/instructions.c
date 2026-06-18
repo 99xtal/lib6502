@@ -327,3 +327,9 @@ int cpy(cpu6502 *cpu, Operand op) {
 
   return 0;
 }
+
+int jmp(cpu6502 *cpu, Operand op) {
+  cpu->PC = op.addr;
+
+  return 0;
+}
