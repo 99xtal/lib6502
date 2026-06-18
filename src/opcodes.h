@@ -4,7 +4,13 @@
 #include <stdint.h>
 #include <lib6502/6502.h>
 
+typedef enum {
+    OPERAND_MEMORY,
+    OPERAND_ACCUMULATOR,
+} OperandType;
+
 typedef struct {
+    OperandType type;
     uint16_t addr;
     int page_crossed;
 } Operand;

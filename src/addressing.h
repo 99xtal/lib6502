@@ -28,4 +28,6 @@ Operand addr_implied(cpu6502 *cpu);
 
 Operand addr_rel(cpu6502 *cpu);
 
+Operand addr_acc(cpu6502 *cpu);
+
 #endif // ADDRESSING_H

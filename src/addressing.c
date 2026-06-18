@@ -3,6 +3,7 @@
 
 Operand addr_imm(cpu6502 *cpu) {
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = cpu->PC++,
     .page_crossed = 0
   };
@@ -17,6 +18,7 @@ Operand addr_abs(cpu6502 *cpu) {
   uint16_t addr = ((uint16_t)high << 8) | low;
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = addr,
     .page_crossed = 0
   };
@@ -30,6 +32,7 @@ Operand addr_abs_x(cpu6502 *cpu) {
   uint16_t addr = base + cpu->X;
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = addr,
     .page_crossed = (base & 0xFF00) != (addr & 0xFF00)
   };
@@ -43,6 +46,7 @@ Operand addr_abs_y(cpu6502 *cpu) {
   uint16_t addr = base + cpu->Y;
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = addr,
     .page_crossed = (base & 0xFF00) != (addr & 0xFF00)
   };
@@ -57,6 +61,7 @@ Operand addr_indirect_x(cpu6502 *cpu) {
   uint8_t high = cpu->read(cpu->ctx, (uint8_t)(zero_page_pointer + 1));
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = ((uint16_t)high << 8 | low),
     .page_crossed = 0
   };
@@ -72,6 +77,7 @@ Operand addr_indirect_y(cpu6502 *cpu) {
   uint16_t addr = base + cpu->Y;
 
   return (Operand) {
+      .type = OPERAND_MEMORY,
       .addr = addr,
       .page_crossed = (base & 0xFF00) != (addr & 0xFF00)
   };
@@ -82,6 +88,7 @@ Operand addr_zero_page(cpu6502 *cpu) {
   cpu->PC++;
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = addr,
     .page_crossed = 0
   };
@@ -92,6 +99,7 @@ Operand addr_zero_page_x(cpu6502 *cpu) {
   uint8_t addr = base + cpu->X;
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = addr,
     .page_crossed = 0
   };
@@ -102,6 +110,7 @@ Operand addr_zero_page_y(cpu6502 *cpu) {
   uint8_t addr = base + cpu->Y;
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = addr,
     .page_crossed = 0
   };
@@ -109,6 +118,7 @@ Operand addr_zero_page_y(cpu6502 *cpu) {
 
 Operand addr_implied(cpu6502 *cpu __attribute__((unused))) {
   return (Operand) { 
+    .type = OPERAND_MEMORY,
     .addr = 0,
     .page_crossed = 0
   };
@@ -138,6 +148,7 @@ Operand addr_indirect(cpu6502 *cpu) {
   uint8_t target_high = cpu->read(cpu->ctx, target_high_addr);
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = ((uint16_t)target_high << 8) | target_low,
     .page_crossed = 0
   };
@@ -148,7 +159,16 @@ Operand addr_rel(cpu6502 *cpu) {
   cpu->PC++;
 
   return (Operand) {
+    .type = OPERAND_MEMORY,
     .addr = addr,
+    .page_crossed = 0,
+  };
+}
+
+Operand addr_acc(cpu6502 *cpu) {
+  return (Operand) {
+    .type = OPERAND_ACCUMULATOR,
+    .addr = 0,
     .page_crossed = 0,
   };
 }

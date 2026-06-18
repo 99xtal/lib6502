@@ -47,6 +47,12 @@ int dec(cpu6502 *cpu, Operand op);  // Decrement a memory location
 int dex(cpu6502 *cpu, Operand op);  // Decrement the X register
 int dey(cpu6502 *cpu, Operand op);  // Decrement the Y register
 
+/** Shifts */
+int asl(cpu6502 *cpu, Operand op);  // Arithmetic Shift Left
+int lsr(cpu6502 *cpu, Operand op);  // Logical Shift Right
+int rol(cpu6502 *cpu, Operand op);  // Rotate Left
+int ror(cpu6502 *cpu, Operand op);  // Rotate Right
+
 /** Jumps & Calls */
 int jmp(cpu6502 *cpu, Operand op);  // Jump to another location
 int jsr(cpu6502 *cpu, Operand op);  // Jump to a subroutine
@@ -62,7 +68,6 @@ int bpl(cpu6502 *cpu, Operand op);  // Branch if negative flag clear
 int bvc(cpu6502 *cpu, Operand op);  // Branch if overflow flag clear
 int bvs(cpu6502 *cpu, Operand op);  // Branch if overflow flag set
 
-
 /** Status Flag Changes */
 int clc(cpu6502 *cpu, Operand op);  // Clear carry flag
 int cld(cpu6502 *cpu, Operand op);  // Clear decimal mode flag
@@ -76,6 +81,5 @@ int sei(cpu6502 *cpu, Operand op);  // Set interrupt disable flag
 int brk(cpu6502 *cpu, Operand op);  // Force an interrupt
 int nop(cpu6502 *cpu, Operand op);  // No operation
 int rti(cpu6502 *cpu, Operand op);  // Return from interrupt
-
 
 #endif // INSTRUCTIONS_H

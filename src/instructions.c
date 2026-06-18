@@ -458,3 +458,93 @@ int bvc(cpu6502 *cpu, Operand op) {
 int bvs(cpu6502 *cpu, Operand op) {
   return branch(cpu, op, get_flag(cpu, FLAG_OVERFLOW));
 }
+
+int asl(cpu6502 *cpu, Operand op) {
+  uint8_t value = op.type == OPERAND_MEMORY
+    ? cpu->read(cpu->ctx, op.addr)
+    : cpu->A;
+
+  uint8_t result = value << 1;
+  uint8_t last_bit = (value & 0x80) != 0;
+
+  if (op.type == OPERAND_MEMORY) {
+    cpu->write(cpu->ctx, op.addr, result);
+  } else {
+    cpu->A = result;
+  }
+
+  set_flag(cpu, FLAG_CARRY, last_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}
+
+int lsr(cpu6502 *cpu, Operand op) {
+  uint8_t value = op.type == OPERAND_MEMORY
+    ? cpu->read(cpu->ctx, op.addr)
+    : cpu->A;
+  
+  uint8_t result = value >> 1;
+  uint8_t first_bit = (value & 0x01) != 0;
+
+  if (op.type == OPERAND_MEMORY) {
+    cpu->write(cpu->ctx, op.addr, result);
+  } else {
+    cpu->A = result;
+  }
+
+  set_flag(cpu, FLAG_CARRY, first_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, 0);
+
+  return 0;
+}
+
+int rol(cpu6502 *cpu, Operand op) {
+  uint8_t value = op.type == OPERAND_MEMORY
+    ? cpu->read(cpu->ctx, op.addr)
+    : cpu->A;
+
+  uint8_t result = value << 1;
+  uint8_t old_last_bit = (value & 0x80) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit;
+
+  if (op.type == OPERAND_MEMORY) {
+    cpu->write(cpu->ctx, op.addr, result);
+  } else {
+    cpu->A = result;
+  }
+
+  set_flag(cpu, FLAG_CARRY, old_last_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}
+
+int ror(cpu6502 *cpu, Operand op) {
+  uint8_t value = op.type == OPERAND_MEMORY
+    ? cpu->read(cpu->ctx, op.addr)
+    : cpu->A;
+
+  uint8_t result = value >> 1;
+  uint8_t old_first_bit = (value & 0x01) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit << 7;
+
+  if (op.type == OPERAND_MEMORY) {
+    cpu->write(cpu->ctx, op.addr, result);
+  } else {
+    cpu->A = result;
+  }
+
+  set_flag(cpu, FLAG_CARRY, old_first_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  return 0;
+}
