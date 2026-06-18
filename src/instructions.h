@@ -48,6 +48,12 @@ int sec(cpu6502 *cpu, Operand op);  // Set carry flag
 int sed(cpu6502 *cpu, Operand op);  // Set decimal mode flag
 int sei(cpu6502 *cpu, Operand op);  // Set interrupt disable flag
 
+/** Jumps & Calls */
+int jmp(cpu6502 *cpu, Operand op);  // Jump to another location
+int jsr(cpu6502 *cpu, Operand op);  // Jump to a subroutine
+int rts(cpu6502 *cpu, Operand op);  // Return from subroutine
+
+
 /** System Functions */
 int brk(cpu6502 *cpu, Operand op);  // Force an interrupt
 int nop(cpu6502 *cpu, Operand op);  // No operation
