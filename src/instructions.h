@@ -52,6 +52,17 @@ int jmp(cpu6502 *cpu, Operand op);  // Jump to another location
 int jsr(cpu6502 *cpu, Operand op);  // Jump to a subroutine
 int rts(cpu6502 *cpu, Operand op);  // Return from subroutine
 
+/** Branches */
+int bcc(cpu6502 *cpu, Operand op);  // Branch if carry flag clear
+int bcs(cpu6502 *cpu, Operand op);  // Branch if carry flag set
+int beq(cpu6502 *cpu, Operand op);  // Branch if zero flag set
+int bmi(cpu6502 *cpu, Operand op);  // Branch if negative flag set
+int bne(cpu6502 *cpu, Operand op);  // Branch if zero flag clear
+int bpl(cpu6502 *cpu, Operand op);  // Branch if negative flag clear
+int bvc(cpu6502 *cpu, Operand op);  // Branch if overflow flag clear
+int bvs(cpu6502 *cpu, Operand op);  // Branch if overflow flag set
+
+
 /** Status Flag Changes */
 int clc(cpu6502 *cpu, Operand op);  // Clear carry flag
 int cld(cpu6502 *cpu, Operand op);  // Clear decimal mode flag

@@ -142,3 +142,13 @@ Operand addr_indirect(cpu6502 *cpu) {
     .page_crossed = 0
   };
 }
+
+Operand addr_rel(cpu6502 *cpu) {
+  uint16_t addr = cpu->PC;
+  cpu->PC++;
+
+  return (Operand) {
+    .addr = addr,
+    .page_crossed = 0,
+  };
+}

@@ -407,3 +407,54 @@ int dey(cpu6502 *cpu, Operand op __attribute__((unused))) {
   
   return 0;
 }
+
+int branch(cpu6502 *cpu, Operand op, int condition) {
+  uint8_t raw = cpu->read(cpu->ctx, op.addr);
+  int8_t offset = (int8_t)raw;
+
+  if(!condition) {
+    return 0;
+  }
+
+  uint16_t old_pc = cpu->PC;
+  cpu->PC += offset;
+
+  // detect page cross
+  if ((old_pc & 0xFF00) != (cpu->PC & 0xFF00)) {
+    return 2;
+  }
+
+  return 1;
+}
+
+int bcc(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, !get_flag(cpu, FLAG_CARRY));
+}
+
+int bcs(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, get_flag(cpu, FLAG_CARRY));
+}
+
+int beq(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, get_flag(cpu, FLAG_ZERO));
+}
+
+int bmi(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, get_flag(cpu, FLAG_NEGATIVE));
+}
+
+int bne(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, !get_flag(cpu, FLAG_ZERO));
+}
+
+int bpl(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, !get_flag(cpu, FLAG_NEGATIVE));
+}
+
+int bvc(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, !get_flag(cpu, FLAG_OVERFLOW));
+}
+
+int bvs(cpu6502 *cpu, Operand op) {
+  return branch(cpu, op, get_flag(cpu, FLAG_OVERFLOW));
+}
