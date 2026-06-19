@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -std=c11 -Iinclude -Isrc
+CFLAGS = -Wall -Wextra -Wpedantic -std=c11 -Iinclude -Isrc -Itest/utils
 
 BUILD_DIR = build
 
@@ -8,6 +8,7 @@ LIB = $(BUILD_DIR)/lib6502.a
 # Source files
 SRC = $(wildcard src/*.c)
 TEST_SRC = $(wildcard test/*.c)
+TEST_UTILS_SRC = $(wildcard test/utils/*.c)
 ROM_SRC = $(wildcard test/roms/*.asm)
 
 # Build directories
@@ -17,6 +18,7 @@ ROM_DIR = $(TEST_DIR)/roms
 
 # Generated files
 OBJ = $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SRC))
+TEST_UTILS_OBJ = $(patsubst test/utils/%.c,$(BUILD_DIR)/test/obj/%.o,$(TEST_UTILS_SRC))
 TEST_BIN = $(patsubst test/%.c,$(TEST_DIR)/%,$(TEST_SRC))
 ROM_OBJ = $(patsubst test/roms/%.asm,$(ROM_DIR)/%.o,$(ROM_SRC))
 ROM_BIN = $(ROM_OBJ:.o=.bin)
@@ -34,10 +36,15 @@ $(OBJ_DIR)/%.o: src/%.c
 	mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Build test util objects
+$(BUILD_DIR)/test/obj/%.o: test/utils/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Build test executables
-$(TEST_DIR)/%: test/%.c $(LIB)
+$(TEST_DIR)/%: test/%.c $(LIB) $(TEST_UTILS_OBJ)
 	mkdir -p $(TEST_DIR)
-	$(CC) $(CFLAGS) $< $(LIB) -o $@
+	$(CC) $(CFLAGS) $< $(TEST_UTILS_OBJ) $(LIB) -o $@
 
 # Assemble 6502 test ROM object files
 $(ROM_DIR)/%.o: test/roms/%.asm
@@ -63,6 +70,8 @@ print:
 	@echo "TEST_SRC = $(TEST_SRC)"
 	@echo "ROM_SRC  = $(ROM_SRC)"
 	@echo "OBJ      = $(OBJ)"
+	@echo "TEST_UTILS_SRC = $(TEST_UTILS_SRC)"
+	@echo "TEST_UTILS_OBJ = $(TEST_UTILS_OBJ)"
 	@echo "TEST_BIN = $(TEST_BIN)"
 	@echo "ROM_OBJ  = $(ROM_OBJ)"
 	@echo "ROM_BIN  = $(ROM_BIN)"
