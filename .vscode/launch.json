@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Klaus",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test/test-klaus-functional",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+    },
+    {
       "name": "Debug Klaus Test",
       "type": "cppdbg",
       "request": "launch",
@@ -14,15 +22,25 @@
       "cwd": "${workspaceFolder}",
       "environment": [],
       "externalConsole": false,
-      "MIMode": "gdb",
-      "setupCommands": [
+      "linux": {
+        "MIMode": "gdb",
+        "setupCommands": [
           {
-              "description": "Enable pretty-printing for gdb",
-              "text": "-enable-pretty-printing",
-              "ignoreFailures": true
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
           },
-          { "text": "set output-radix 16" },
-      ]
+          {
+            "description": "Set GDB output to hex",
+            "text": "set output-radix 16",
+            "ignoreFailures": true
+          }
+        ]
+      },
+      "osx": {
+        "MIMode": "lldb",
+        "setupCommands": []
+      }
     }
   ]
 }

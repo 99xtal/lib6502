@@ -24,9 +24,7 @@ TEST_BIN = $(patsubst test/%.c,$(TEST_DIR)/%,$(TEST_SRC))
 ROM_OBJ = $(patsubst test/roms/%.asm,$(ROM_DIR)/%.o,$(ROM_ASM_SRC))
 ROM_BUILD = $(ROM_OBJ:.o=.bin)
 
-ROM_COPY = $(patsubst test/roms/%.bin,$(ROM_DIR)/prebuilt/%.bin,$(ROM_BIN_SRC))
-
-ROM_BIN = $(ROM_BUILD) $(ROM_COPY)
+ROM_BIN = $(ROM_BUILD)
 
 # Default target
 all: $(LIB)
@@ -54,11 +52,7 @@ $(TEST_DIR)/%: test/%.c $(LIB) $(TEST_UTILS_OBJ)
 # Assemble 6502 test ROM object files
 $(ROM_DIR)/%.o: test/roms/%.asm
 	mkdir -p $(ROM_DIR)
-	ca65 $< -o $@
-
-$(ROM_DIR)/prebuilt/%.bin: test/roms/%.bin
-	mkdir -p $(dir $@)
-	cp $< $@
+	ca65 $< -l $(basename $@).lst -o $@
 
 # Link ROM images
 $(ROM_DIR)/%.bin: $(ROM_DIR)/%.o test/roms/test-machine.cfg

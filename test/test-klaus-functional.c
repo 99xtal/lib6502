@@ -10,7 +10,7 @@
 
 // Verify this for your exact Klaus binary.
 // Common value for 6502_functional_test.bin is $331C.
-#define SUCCESS_PC 0x331C
+#define SUCCESS_PC 0x3496
 
 #define MAX_STEPS 100000000
 
@@ -18,7 +18,7 @@ int main(void) {
   TestMachine machine;
   memset(&machine, 0, sizeof(machine));
 
-  if (load_binary(&machine, "build/test/roms/prebuilt/6502_functional_test.bin", LOAD_ADDR) != 0) {
+  if (load_binary(&machine, "build/test/roms/klaus-functional.bin", LOAD_ADDR) != 0) {
     return 1;
   }
 
