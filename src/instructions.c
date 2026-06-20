@@ -231,7 +231,11 @@ int pha(cpu6502 *cpu, Operand op __attribute__((unused))) {
 }
 
 int php(cpu6502 *cpu, Operand op __attribute__((unused))) {
-  stack_push_u8(cpu, cpu->status);
+  uint8_t status = cpu->status;
+  status |= FLAG_BREAK;
+  status |= FLAG_UNUSED;   // bit 5 is usually always pushed as 1
+  
+  stack_push_u8(cpu, status);
 
   return 0;
 }
@@ -275,7 +279,7 @@ int adc(cpu6502 *cpu, Operand op) {
 
 int sbc(cpu6502 *cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
-  uint8_t carry = get_flag(cpu, FLAG_CARRY);
+  uint8_t carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
 
   uint16_t result = (uint16_t)cpu->A + (uint8_t)(~value) + carry;
   uint8_t final = (uint8_t)result;
@@ -284,13 +288,11 @@ int sbc(cpu6502 *cpu, Operand op) {
   set_flag(cpu, FLAG_ZERO, final == 0);
   set_flag(cpu, FLAG_NEGATIVE, (final & 0x80) != 0);
 
-  // Overflow happens when A and value have the same sign,
-  // but the result has a different sign.
   set_flag(cpu, FLAG_OVERFLOW,
-      (~(cpu->A ^ value) & (cpu->A ^ final) & 0x80) != 0
+      ((cpu->A ^ value) & (cpu->A ^ final) & 0x80) != 0
   );
 
-  cpu->A = result;
+  cpu->A = final;
 
   return 0;
 }
