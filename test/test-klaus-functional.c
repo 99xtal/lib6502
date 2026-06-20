@@ -8,9 +8,8 @@
 #define LOAD_ADDR  0x0000
 #define START_ADDR 0x0400
 
-// Verify this for your exact Klaus binary.
-// Common value for 6502_functional_test.bin is $331C.
-#define SUCCESS_PC 0x3496
+// Verify this for the exact Klaus listing file.
+#define SUCCESS_PC 0x347D
 
 #define MAX_STEPS 100000000
 

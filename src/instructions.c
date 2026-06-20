@@ -259,20 +259,40 @@ int adc(cpu6502 *cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
 
-  uint16_t sum = (uint16_t)cpu->A + value + carry_in;
-  uint8_t result = (uint8_t)sum;
+  if (get_flag(cpu, FLAG_DECIMAL_MODE)) {
+    uint16_t low_nibble = (cpu->A & 0x0F) + (value & 0x0F) + carry_in;
+    if (low_nibble > 0x09) {
+      low_nibble += 0x06;
+    }
 
-  set_flag(cpu, FLAG_CARRY, sum > 0xFF);
-  set_flag(cpu, FLAG_ZERO, result == 0);
-  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+    uint16_t carry_to_high = (low_nibble >> 4) & 0x01; 
+    uint16_t high_nibble = (cpu->A & 0xF0) + (value & 0xF0) + (carry_to_high << 4);
 
-  // Overflow happens when A and value have the same sign,
-  // but the result has a different sign.
-  set_flag(cpu, FLAG_OVERFLOW,
-      (~(cpu->A ^ value) & (cpu->A ^ result) & 0x80) != 0
-  );
+    set_flag(cpu, FLAG_CARRY, high_nibble > 0xFF);
 
-  cpu->A = result;
+    if (high_nibble > 0x9F) {
+        high_nibble += 0x60;
+    }
+
+    uint16_t decimal_sum = (high_nibble & 0xF0) | (low_nibble & 0x0F);
+    uint8_t decimal_result = (uint8_t)decimal_sum;
+
+    cpu->A = decimal_result;
+
+  } else {
+    uint16_t binary_sum = (uint16_t)cpu->A + value + carry_in;
+    uint8_t binary_result = (uint8_t)binary_sum;
+
+    set_flag(cpu, FLAG_CARRY, binary_sum > 0xFF);
+    set_flag(cpu, FLAG_ZERO, binary_result == 0);
+    set_flag(cpu, FLAG_NEGATIVE, (binary_result & 0x80) != 0);
+      // Overflow happens when A and value have the same sign,
+    // but the result has a different sign.
+    set_flag(cpu, FLAG_OVERFLOW,
+        (~(cpu->A ^ value) & (cpu->A ^ binary_result) & 0x80) != 0
+    );
+    cpu->A = binary_result;
+  }
 
   return 0;
 }
@@ -281,18 +301,18 @@ int sbc(cpu6502 *cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
 
-  uint16_t result = (uint16_t)cpu->A + (uint8_t)(~value) + carry;
-  uint8_t final = (uint8_t)result;
+  uint16_t binary_diff = (uint16_t)cpu->A + (uint8_t)(~value) + carry;
+  uint8_t binary_result = (uint8_t)binary_diff;
 
-  set_flag(cpu, FLAG_CARRY, result > 0xFF);
-  set_flag(cpu, FLAG_ZERO, final == 0);
-  set_flag(cpu, FLAG_NEGATIVE, (final & 0x80) != 0);
+  set_flag(cpu, FLAG_CARRY, binary_diff > 0xFF);
+  set_flag(cpu, FLAG_ZERO, binary_result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (binary_result & 0x80) != 0);
 
   set_flag(cpu, FLAG_OVERFLOW,
-      ((cpu->A ^ value) & (cpu->A ^ final) & 0x80) != 0
+    ((cpu->A ^ value) & (cpu->A ^ binary_result) & 0x80) != 0
   );
 
-  cpu->A = final;
+  cpu->A = binary_result;
 
   return 0;
 }
