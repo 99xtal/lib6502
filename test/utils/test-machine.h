@@ -11,6 +11,6 @@ uint8_t test_read(void *ctx, uint16_t addr);
 
 void test_write(void *ctx, uint16_t addr, uint8_t value);
 
-int load_rom(TestMachine *m, const char *path);
+int load_binary(TestMachine *m, const char *path, uint16_t address);
 
 #endif // TEST_MACHINE_H

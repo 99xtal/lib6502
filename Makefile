@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -std=c11 -Iinclude -Isrc -Itest/utils
+CFLAGS = -g -O0 -Wall -Wextra -Wpedantic -std=c11 -Iinclude -Isrc -Itest/utils
 
 BUILD_DIR = build
 
@@ -9,7 +9,8 @@ LIB = $(BUILD_DIR)/lib6502.a
 SRC = $(wildcard src/*.c)
 TEST_SRC = $(wildcard test/*.c)
 TEST_UTILS_SRC = $(wildcard test/utils/*.c)
-ROM_SRC = $(wildcard test/roms/*.asm)
+ROM_ASM_SRC = $(wildcard test/roms/*.asm)
+ROM_BIN_SRC = $(wildcard test/roms/*.bin)
 
 # Build directories
 OBJ_DIR = $(BUILD_DIR)/obj
@@ -20,8 +21,12 @@ ROM_DIR = $(TEST_DIR)/roms
 OBJ = $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SRC))
 TEST_UTILS_OBJ = $(patsubst test/utils/%.c,$(BUILD_DIR)/test/obj/%.o,$(TEST_UTILS_SRC))
 TEST_BIN = $(patsubst test/%.c,$(TEST_DIR)/%,$(TEST_SRC))
-ROM_OBJ = $(patsubst test/roms/%.asm,$(ROM_DIR)/%.o,$(ROM_SRC))
-ROM_BIN = $(ROM_OBJ:.o=.bin)
+ROM_OBJ = $(patsubst test/roms/%.asm,$(ROM_DIR)/%.o,$(ROM_ASM_SRC))
+ROM_BUILD = $(ROM_OBJ:.o=.bin)
+
+ROM_COPY = $(patsubst test/roms/%.bin,$(ROM_DIR)/prebuilt/%.bin,$(ROM_BIN_SRC))
+
+ROM_BIN = $(ROM_BUILD) $(ROM_COPY)
 
 # Default target
 all: $(LIB)
@@ -50,6 +55,10 @@ $(TEST_DIR)/%: test/%.c $(LIB) $(TEST_UTILS_OBJ)
 $(ROM_DIR)/%.o: test/roms/%.asm
 	mkdir -p $(ROM_DIR)
 	ca65 $< -o $@
+
+$(ROM_DIR)/prebuilt/%.bin: test/roms/%.bin
+	mkdir -p $(dir $@)
+	cp $< $@
 
 # Link ROM images
 $(ROM_DIR)/%.bin: $(ROM_DIR)/%.o test/roms/test-machine.cfg

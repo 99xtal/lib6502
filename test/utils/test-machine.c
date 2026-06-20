@@ -9,28 +9,32 @@ uint8_t test_read(void *ctx, uint16_t addr) {
 
 void test_write(void *ctx, uint16_t addr, uint8_t value) {
   TestMachine *m = ctx;
-  
-  if (addr >= 0x8000) {
-    return;
-  }
-
   m->mem[addr] = value;
 }
 
-int load_rom(TestMachine *m, const char *path) {
+int load_binary(TestMachine *m, const char *path, uint16_t address) {
   FILE *f = fopen(path, "rb");
   if (!f) {
     perror("fopen");
     return -1;
   }
 
-  size_t n = fread(&m->mem[0x8000], 1, 0x8000, f);
-  fclose(f);
+  size_t bytes_read = fread(
+    &m->mem[address],
+    1,
+    sizeof(m->mem) - address,
+    f
+  );
 
-  if (n != 0x8000) {
-    fprintf(stderr, "expected 0x8000 bytes, got %zu\n", n);
+  if (ferror(f)) {
+    perror("fread");
+    fclose(f);
     return -1;
   }
+
+  fclose(f);
+
+  printf("Loaded %zu bytes at $%04X\n", bytes_read, address);
 
   return 0;
 }

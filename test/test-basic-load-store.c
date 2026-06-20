@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <lib6502/6502.h>
 #include "test-machine.h"
 
@@ -10,7 +11,7 @@ int main(void) {
   TestMachine machine;
   memset(&machine, 0, sizeof(machine));
 
-  if (load_rom(&machine, "build/test/roms/basic-load-store.bin") != 0) {
+  if (load_binary(&machine, "build/test/roms/basic-load-store.bin", 0x8000) != 0) {
     return 1;
   }
 
