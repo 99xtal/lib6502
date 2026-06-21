@@ -19,9 +19,10 @@ typedef int (*exec_fn)(cpu6502 *cpu, Operand op);
 typedef Operand (*addr_fn)(cpu6502 *cpu);
 
 typedef struct {
-    const char *name;
+    const char *mnemonic;
     exec_fn execute;
     addr_fn address;
+    const char *operand_fmt;
     uint8_t cycles;
     int page_cross_penalty;
 } Opcode;
