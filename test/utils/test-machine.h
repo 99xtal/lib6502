@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 typedef struct {
-  uint8_t mem[0xFFFF];
+  uint8_t mem[0x10000];
 } TestMachine;
 
 uint8_t test_read(void *ctx, uint16_t addr);

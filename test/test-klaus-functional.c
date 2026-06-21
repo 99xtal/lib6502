@@ -9,7 +9,7 @@
 #define START_ADDR 0x0400
 
 // Verify this for the exact Klaus listing file.
-#define SUCCESS_PC 0x3381
+#define SUCCESS_PC 0x336D
 
 #define MAX_STEPS 100000000
 
