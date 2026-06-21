@@ -268,11 +268,11 @@ int adc(cpu6502 *cpu, Operand op) {
     uint16_t carry_to_high = (low_nibble >> 4) & 0x01; 
     uint16_t high_nibble = (cpu->A & 0xF0) + (value & 0xF0) + (carry_to_high << 4);
 
-    set_flag(cpu, FLAG_CARRY, high_nibble > 0xFF);
-
     if (high_nibble > 0x9F) {
-        high_nibble += 0x60;
+      high_nibble += 0x60;
     }
+
+    set_flag(cpu, FLAG_CARRY, high_nibble > 0xFF);
 
     uint16_t decimal_sum = (high_nibble & 0xF0) | (low_nibble & 0x0F);
     uint8_t decimal_result = (uint8_t)decimal_sum;
@@ -312,7 +312,26 @@ int sbc(cpu6502 *cpu, Operand op) {
     ((cpu->A ^ value) & (cpu->A ^ binary_result) & 0x80) != 0
   );
 
-  cpu->A = binary_result;
+  if (get_flag(cpu, FLAG_DECIMAL_MODE)) {
+    int16_t low_nibble =
+      (cpu->A & 0x0F) - (value & 0x0F) - (1 - carry);
+
+    int16_t high_nibble =
+      (cpu->A & 0xF0) - (value & 0xF0);
+
+    if (low_nibble < 0) {
+      low_nibble -= 0x06;
+      high_nibble -= 0x10;
+    }
+
+    if (high_nibble < 0) {
+      high_nibble -= 0x60;
+    }
+
+    cpu->A = (uint8_t)((high_nibble & 0xF0) | (low_nibble & 0x0F));
+  } else {
+    cpu->A = binary_result;
+  }
 
   return 0;
 }
