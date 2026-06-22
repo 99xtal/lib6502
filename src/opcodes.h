@@ -23,6 +23,7 @@ typedef struct {
     exec_fn execute;
     addr_fn address;
     const char *operand_fmt;
+    uint8_t bytes;
     uint8_t cycles;
     int page_cross_penalty;
 } Opcode;
