@@ -30,40 +30,26 @@ int cpu6502_reset(cpu6502 *cpu) {
 }
 
 int cpu6502_step(cpu6502 *cpu) {
-    uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC);
+    uint16_t initial_pc = cpu->PC;
+    uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC++);
     Opcode opcode = opcode_table[opcode_byte];
+    cpu6502_trace t = {0};
     uint8_t bytes[3];
 
     if (cpu->trace) {
         for (uint8_t i = 0; i < opcode.bytes; i++) {
-            uint16_t p = cpu->PC + i;
+            uint16_t p = initial_pc + i;
             bytes[i] = cpu->read(cpu->ctx, p);
         }
-    }
 
-    cpu->PC++;
-
-    Operand op = opcode.address(cpu);
-    int extra_cycles = opcode.execute(cpu, op);
-
-    int cycles = opcode.cycles + extra_cycles;
-
-    if (op.page_crossed) {
-        cycles += opcode.page_cross_penalty;
-    }
-
-    if (cpu->trace) {
-        cpu6502_trace t = {
-            .PC = cpu->PC,
-            .bytes_count = opcode.bytes,
-            .mnemonic = opcode.mnemonic,
-            .A = cpu->A,
-            .X = cpu->X,
-            .Y = cpu->Y,
-            .status = cpu->status,
-            .SP = cpu->SP,
-            .cycles = cycles,
-        };
+        t.PC = initial_pc,
+        t.bytes_count = opcode.bytes,
+        t.mnemonic = opcode.mnemonic,
+        t.A = cpu->A,
+        t.X = cpu->X,
+        t.Y = cpu->Y,
+        t.status = cpu->status,
+        t.SP = cpu->SP,
         memcpy(t.bytes, bytes, sizeof bytes);
 
         if (opcode.operand_fmt && opcode.operand_fmt[0] != '\0') {
@@ -81,6 +67,19 @@ int cpu6502_step(cpu6502 *cpu) {
                         operand);
             }
         }
+    }
+
+    Operand op = opcode.address(cpu);
+    int extra_cycles = opcode.execute(cpu, op);
+
+    int cycles = opcode.cycles + extra_cycles;
+
+    if (op.page_crossed) {
+        cycles += opcode.page_cross_penalty;
+    }
+
+    if (cpu->trace) {
+        t.cycles = cycles;
 
         cpu->trace(cpu->trace_ctx, t);
     }
