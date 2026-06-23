@@ -49,4 +49,6 @@ int cpu6502_reset(cpu6502 *cpu);
 
 int cpu6502_step(cpu6502 *cpu);
 
+int cpu6502_nmi(cpu6502 *cpu);
+
 #endif // LIB6502_6502_H

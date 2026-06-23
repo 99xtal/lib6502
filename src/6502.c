@@ -5,6 +5,7 @@
 
 #include "flags.h"
 #include "opcodes.h"
+#include "stack.h"
 #include "vectors.h"
 
 void cpu6502_init(cpu6502 *cpu, cpu6502_read_fn read, cpu6502_write_fn write, void *ctx) {
@@ -85,4 +86,15 @@ int cpu6502_step(cpu6502 *cpu) {
     }
 
     return cycles;
+}
+
+int cpu6502_nmi(cpu6502 *cpu) {
+    stack_push_u16(cpu, cpu->PC);
+    stack_push_u8(cpu, (cpu->status & ~FLAG_BREAK) | FLAG_UNUSED);
+
+    set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
+
+    cpu->PC = read_vector(cpu, VECTOR_NMI);
+
+    return 7;
 }
