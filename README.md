@@ -6,30 +6,95 @@ A lightweight MOS 6502 CPU emulation library written in C.
 
 ## Features
 
-- Complete implementation of official 6502 instructions
-- Decimal mode (BCD) arithmetic support
-- User-defined memory bus via read/write callbacks
-- Instruction stepping with cycle counts
-- Passes the Klaus Dormann 6502 functional test
+* Complete implementation of official MOS 6502 instructions
+* Decimal mode (BCD) arithmetic support
+* User-defined memory bus via read/write callbacks
+* Instruction stepping with cycle counts
+* Optional instruction tracing support
+* Passes the Klaus Dormann 6502 functional test suite
+
+## Requirements
+
+### Build Tools
+
+* CMake 3.16+
+* C compiler with C11 support
+
+### Test Dependencies
+
+The test ROMs are assembled using the CC65 toolchain:
+
+* `ca65`
+* `ld65`
+
+Install CC65 from:
+
+https://cc65.github.io/
 
 ## Building
 
-Build the static library:
+Configure the project:
 
 ```sh
-make
+cmake -S . -B build
 ```
 
-The resulting library is created at:
+Build the library:
 
+```sh
+cmake --build build
 ```
+
+The resulting static library is created at:
+
+```text
 build/lib6502.a
 ```
 
-Run the test suite:
+## Running Tests
+
+Build and run all tests:
 
 ```sh
-make test
+ctest --test-dir build --output-on-failure
+```
+
+or, from inside the build directory:
+
+```sh
+ctest --output-on-failure
+```
+
+## Building Test ROMs
+
+Several tests depend on generated 6502 ROM images.
+
+Build all ROMs:
+
+```sh
+cmake --build build --target test_roms
+```
+
+Generated ROMs are placed in:
+
+```text
+build/test/roms/
+```
+
+## Using lib6502 in Another CMake Project
+
+If `lib6502` is included as a git submodule:
+
+```cmake
+add_subdirectory(external/lib6502)
+
+target_link_libraries(my_emulator PRIVATE 6502)
+```
+
+The public include directory is exported automatically.
+
+```c
+#include <lib6502/6502.h>
 ```
 
 ## Usage
@@ -43,11 +108,11 @@ uint8_t read(void *ctx, uint16_t addr) {
     return ((uint8_t *)ctx)[addr];
 }
 
-void write(void *ctx, uint16_t addr, uint16_t value) {
+void write(void *ctx, uint16_t addr, uint8_t value) {
     ((uint8_t *)ctx)[addr] = value;
 }
 
-int main() {
+int main(void) {
     uint8_t memory[0x10000] = {0};
 
     cpu6502 cpu;
@@ -63,6 +128,18 @@ int main() {
 
 ## Design
 
-`lib6502` emulates only the CPU. It does not implement RAM, ROM, graphics, audio, or peripherals.
+`lib6502` emulates only the CPU. It does not implement RAM, ROM, graphics, audio, timers, interrupts sources, or peripherals.
 
 A complete system emulator should provide a bus implementation that maps memory accesses to the appropriate hardware components.
+
+Typical uses include:
+
+* NES emulators
+* Commodore 64 emulators
+* Apple II emulators
+* Custom 6502-based systems
+* Educational projects and tooling
+
+## License
+
+MIT License.
