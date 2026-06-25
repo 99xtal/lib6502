@@ -1,6 +1,7 @@
 #ifndef LIB6502_6502_H
 #define LIB6502_6502_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -40,6 +41,9 @@ typedef struct cpu6502 {
     cpu6502_read_fn read;
     cpu6502_write_fn write;
     void *ctx;
+
+    // stops program execution, set by undocumented *KIL opcode
+    bool jammed;
 
     // Optional tracing
     cpu6502_trace_fn trace;

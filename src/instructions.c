@@ -590,6 +590,11 @@ int ror(cpu6502 *cpu, Operand op) {
   return 0;
 }
 
+int kil(cpu6502 *cpu, Operand op __attribute__((unused))) {
+  cpu->jammed = true;
+  return 0;
+}
+
 int slo(cpu6502 *cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
