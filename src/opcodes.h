@@ -28,6 +28,7 @@ typedef struct {
     int page_cross_penalty;
 } Opcode;
 
-extern const Opcode opcode_table[256];
+extern const Opcode opcode_table_strict[256];
+extern const Opcode opcode_table_nmos[256];
 
 #endif // OPCODES_H

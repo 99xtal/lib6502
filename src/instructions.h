@@ -82,4 +82,7 @@ int brk(cpu6502 *cpu, Operand op);  // Force an interrupt
 int nop(cpu6502 *cpu, Operand op);  // No operation
 int rti(cpu6502 *cpu, Operand op);  // Return from interrupt
 
+/** Undocumented Functions */
+int slo(cpu6502 *cpu, Operand op);  // ASL and OR combo
+
 #endif // INSTRUCTIONS_H

@@ -23,7 +23,7 @@ int main(void) {
     bus.mem[0xFFFC] = 0x34;
     bus.mem[0xFFFD] = 0x12;
 
-    cpu6502_init(&cpu, bus_read, bus_write, &bus);
+    cpu6502_init(&cpu, CPU6502_VARIANT_STRICT, bus_read, bus_write, &bus);
     cpu6502_reset(&cpu);
 
     assert(cpu.SP == 0xFD);

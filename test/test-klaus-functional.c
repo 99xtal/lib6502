@@ -51,7 +51,7 @@ int main(void) {
   }
 
   cpu6502 cpu;
-  cpu6502_init(&cpu, test_read, test_write, &machine);
+  cpu6502_init(&cpu, CPU6502_VARIANT_STRICT, test_read, test_write, &machine);
   cpu6502_reset(&cpu);
 
   if (ENABLE_TRACING != 0) {

@@ -8,12 +8,13 @@
 #include "stack.h"
 #include "vectors.h"
 
-void cpu6502_init(cpu6502 *cpu, cpu6502_read_fn read, cpu6502_write_fn write, void *ctx) {
+void cpu6502_init(cpu6502 *cpu, cpu6502_variant variant, cpu6502_read_fn read, cpu6502_write_fn write, void *ctx) {
     cpu->A = 0;
     cpu->X = 0;
     cpu->Y = 0;
     cpu->SP = 0;
     cpu->status = 0 | FLAG_UNUSED; // Set unused flag to 1
+    cpu->variant = variant;
 
     cpu->read = read;
     cpu->write = write;
@@ -31,12 +32,23 @@ int cpu6502_reset(cpu6502 *cpu) {
 }
 
 int cpu6502_step(cpu6502 *cpu) {
+    Opcode *opcode_table;
+
+    switch (cpu->variant) {
+        case CPU6502_VARIANT_NMOS:
+            opcode_table = opcode_table_nmos;
+            break;
+        case CPU6502_VARIANT_STRICT:
+        default:
+            opcode_table = opcode_table_strict;
+    }
+
     uint16_t initial_pc = cpu->PC;
     uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC++);
     Opcode opcode = opcode_table[opcode_byte];
+
     cpu6502_trace t = {0};
     uint8_t bytes[3];
-
     if (cpu->trace) {
         for (uint8_t i = 0; i < opcode.bytes; i++) {
             uint16_t p = initial_pc + i;

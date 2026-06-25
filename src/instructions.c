@@ -589,3 +589,19 @@ int ror(cpu6502 *cpu, Operand op) {
 
   return 0;
 }
+
+int slo(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  set_flag(cpu, FLAG_CARRY, value & 0x80);
+
+  value <<= 1;
+  cpu->write(cpu->ctx, op.addr, value);
+
+  cpu->A |= value;
+
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0);
+  set_flag(cpu, FLAG_NEGATIVE, cpu->A & 0x80);
+
+  return 0;
+}
