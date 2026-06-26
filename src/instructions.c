@@ -667,3 +667,21 @@ int sre(cpu6502 *cpu, Operand op) {
 
   return 0;
 }
+
+int alr(cpu6502 *cpu, Operand op) {
+  // AND
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  cpu->A &= value;
+
+  // LSR
+  uint8_t carry = cpu->A & 0x01;
+  uint8_t result = cpu->A >> 1;
+
+  cpu->A = result;
+
+  set_flag(cpu, FLAG_CARRY, carry);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, 0);
+
+  return 0;
+}

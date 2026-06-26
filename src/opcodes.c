@@ -243,6 +243,7 @@ const Opcode opcode_table_nmos[256] = {
   [0x48] = { .mnemonic = "PHA", .execute = pha, .address = addr_implied, .bytes = 1, .operand_fmt = FMT_IMP, .cycles = 3, .page_cross_penalty = 0 },
   [0x49] = { .mnemonic = "EOR", .execute = eor, .address = addr_imm, .bytes = 2, .operand_fmt = FMT_IMM, .cycles = 2, .page_cross_penalty = 0 },
   [0x4A] = { .mnemonic = "LSR", .execute = lsr, .address = addr_acc, .bytes = 1, .operand_fmt = "A", .cycles = 2, .page_cross_penalty = 0 },
+  [0x4B] = { .mnemonic = "*ALR", .execute = alr, .address = addr_imm, .bytes = 2, .operand_fmt = FMT_IMM, .cycles = 2, .page_cross_penalty = 0 },
   [0x4C] = { .mnemonic = "JMP", .execute = jmp, .address = addr_abs, .bytes = 3, .operand_fmt = FMT_ABS, .cycles = 3, .page_cross_penalty = 0 },
   [0x4D] = { .mnemonic = "EOR", .execute = eor, .address = addr_abs, .bytes = 3, .operand_fmt = FMT_ABS, .cycles = 4, .page_cross_penalty = 0 },
   [0x4E] = { .mnemonic = "LSR", .execute = lsr, .address = addr_abs, .bytes = 3, .operand_fmt = FMT_ABS, .cycles = 6, .page_cross_penalty = 0 },
