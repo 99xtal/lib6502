@@ -610,3 +610,41 @@ int slo(cpu6502 *cpu, Operand op) {
 
   return 0;
 }
+
+int anc(cpu6502 *cpu, Operand op) {
+  // AND operation
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  cpu->A &= value;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  // set carry as if it were ASL
+  uint8_t last_bit = (value & 0x80) != 0;
+  set_flag(cpu, FLAG_CARRY, last_bit);
+}
+
+int rla(cpu6502 *cpu, Operand op) {
+  uint8_t value = op.type == OPERAND_MEMORY
+    ? cpu->read(cpu->ctx, op.addr)
+    : cpu->A;
+
+  uint8_t result = value << 1;
+  uint8_t old_last_bit = (value & 0x80) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit;
+
+  if (op.type == OPERAND_MEMORY) {
+    cpu->write(cpu->ctx, op.addr, result);
+  } else {
+    cpu->A = result;
+  }
+
+  // AND operation
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  cpu->A &= value;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+}
