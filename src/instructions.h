@@ -89,5 +89,6 @@ int anc(cpu6502 *cpu, Operand op);  // AND with carry like ASL
 int rla(cpu6502 *cpu, Operand op);
 int sre(cpu6502 *cpu, Operand op);
 int alr(cpu6502 *cpu, Operand op);  // AND + LSR
+int rra(cpu6502 *cpu, Operand op);  // ROR + ADC
 
 #endif // INSTRUCTIONS_H

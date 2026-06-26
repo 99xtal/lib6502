@@ -255,8 +255,7 @@ int plp(cpu6502 *cpu, Operand op __attribute__((unused)) ) {
   return 0;
 }
 
-int adc(cpu6502 *cpu, Operand op) {
-  uint8_t value = cpu->read(cpu->ctx, op.addr);
+void execute_adc(cpu6502 *cpu, uint8_t value) {
   uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
 
   if (get_flag(cpu, FLAG_DECIMAL_MODE)) {
@@ -293,6 +292,12 @@ int adc(cpu6502 *cpu, Operand op) {
     );
     cpu->A = binary_result;
   }
+}
+
+int adc(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  execute_adc(cpu, value);
 
   return 0;
 }
@@ -622,30 +627,30 @@ int anc(cpu6502 *cpu, Operand op) {
   // set carry as if it were ASL
   uint8_t last_bit = (value & 0x80) != 0;
   set_flag(cpu, FLAG_CARRY, last_bit);
+
+  return 0;
 }
 
 int rla(cpu6502 *cpu, Operand op) {
-  uint8_t value = op.type == OPERAND_MEMORY
-    ? cpu->read(cpu->ctx, op.addr)
-    : cpu->A;
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  uint8_t old_carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
+  uint8_t rol_carry = (value & 0x80) != 0;
 
   uint8_t result = value << 1;
-  uint8_t old_last_bit = (value & 0x80) != 0;
-  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+  result |= old_carry;
 
+  cpu->write(cpu->ctx, op.addr, result);
 
-  if (op.type == OPERAND_MEMORY) {
-    cpu->write(cpu->ctx, op.addr, result);
-  } else {
-    cpu->A = result;
-  }
+  set_flag(cpu, FLAG_CARRY, rol_carry);
 
-  // AND operation
-  uint8_t value = cpu->read(cpu->ctx, op.addr);
-  cpu->A &= value;
+  // AND rotated memory into A
+  cpu->A &= result;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
-  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0);
+
+  return 0;
 }
 
 int sre(cpu6502 *cpu, Operand op) {
@@ -682,6 +687,21 @@ int alr(cpu6502 *cpu, Operand op) {
   set_flag(cpu, FLAG_CARRY, carry);
   set_flag(cpu, FLAG_ZERO, result == 0);
   set_flag(cpu, FLAG_NEGATIVE, 0);
+
+  return 0;
+}
+
+int rra(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  uint8_t result = value >> 1;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit << 7;
+
+  cpu->write(cpu->ctx, op.addr, result);
+
+  execute_adc(cpu, result);
 
   return 0;
 }
