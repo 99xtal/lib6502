@@ -6,6 +6,11 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+# Default to Debug when not specified.
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
 file(GLOB LIB6502_SOURCES CONFIGURE_DEPENDS src/*.c)
 
 add_library(6502 STATIC ${LIB6502_SOURCES})
@@ -20,6 +25,7 @@ target_include_directories(6502 PRIVATE
 
 target_compile_options(6502 PRIVATE
     -Wall -Wextra -Wpedantic
+    $<$<CONFIG:Debug>:-g -O0>
 )
 
 # ---- Tests ----
@@ -37,6 +43,11 @@ target_include_directories(6502_test_utils PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/test/utils
 )
 
+target_compile_options(6502_test_utils PRIVATE
+    -Wall -Wextra -Wpedantic
+    $<$<CONFIG:Debug>:-g -O0>
+)
+
 target_link_libraries(6502_test_utils PRIVATE 6502)
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
@@ -47,6 +58,11 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     target_include_directories(${TEST_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/test/utils
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+
+    target_compile_options(${TEST_NAME} PRIVATE
+        -Wall -Wextra -Wpedantic
+        $<$<CONFIG:Debug>:-g -O0>
     )
 
     target_link_libraries(${TEST_NAME} PRIVATE

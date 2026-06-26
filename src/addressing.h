@@ -2,32 +2,32 @@
 #define ADDRESSING_H
 
 #include <lib6502/6502.h>
-#include "opcodes.h"
+#include "operand.h"
 
-Operand addr_imm(cpu6502 *cpu);
+typedef Operand (*addr_fn)(cpu6502 *cpu);
 
-Operand addr_abs(cpu6502 *cpu);
+typedef enum {
+    ADDR_IMM,
+    ADDR_ABS,
+    ADDR_ABS_X,
+    ADDR_ABS_Y,
+    ADDR_IND,
+    ADDR_IND_X,
+    ADDR_IND_Y,
+    ADDR_ZP,
+    ADDR_ZP_X,
+    ADDR_ZP_Y,
+    ADDR_IMP,
+    ADDR_REL,
+    ADDR_ACC,
+} AddrMode;
 
-Operand addr_abs_x(cpu6502 *cpu);
+typedef struct {
+    addr_fn address;
+    uint8_t bytes;
+    const char *format;
+} AddressingMode;
 
-Operand addr_abs_y(cpu6502 *cpu);
-
-Operand addr_indirect(cpu6502 *cpu);
-
-Operand addr_indirect_x(cpu6502 *cpu);
-
-Operand addr_indirect_y(cpu6502 *cpu);
-
-Operand addr_zero_page(cpu6502 *cpu);
-
-Operand addr_zero_page_x(cpu6502 *cpu);
-
-Operand addr_zero_page_y(cpu6502 *cpu);
-
-Operand addr_implied(cpu6502 *cpu);
-
-Operand addr_rel(cpu6502 *cpu);
-
-Operand addr_acc(cpu6502 *cpu);
+extern const AddressingMode addr_modes[13];
 
 #endif // ADDRESSING_H

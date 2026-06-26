@@ -36,7 +36,7 @@ int cpu6502_step(cpu6502 *cpu) {
         return 1; // burn a cycle
     }
     
-    Opcode *opcode_table;
+    const Opcode *opcode_table;
 
     switch (cpu->variant) {
         case CPU6502_VARIANT_NMOS:
@@ -50,17 +50,20 @@ int cpu6502_step(cpu6502 *cpu) {
     uint16_t initial_pc = cpu->PC;
     uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC++);
     Opcode opcode = opcode_table[opcode_byte];
+    AddressingMode addressing_mode = addr_modes[opcode.addr_mode];
 
     cpu6502_trace t = {0};
     uint8_t bytes[3];
     if (cpu->trace) {
-        for (uint8_t i = 0; i < opcode.bytes; i++) {
+        uint8_t total_bytes = addressing_mode.bytes + 1;
+
+        for (uint8_t i = 0; i < total_bytes; i++) {
             uint16_t p = initial_pc + i;
             bytes[i] = cpu->read(cpu->ctx, p);
         }
 
         t.PC = initial_pc,
-        t.bytes_count = opcode.bytes,
+        t.bytes_count = total_bytes,
         t.mnemonic = opcode.mnemonic,
         t.A = cpu->A,
         t.X = cpu->X,
@@ -69,24 +72,24 @@ int cpu6502_step(cpu6502 *cpu) {
         t.SP = cpu->SP,
         memcpy(t.bytes, bytes, sizeof bytes);
 
-        if (opcode.operand_fmt && opcode.operand_fmt[0] != '\0') {
-            if (opcode.bytes == 2) {
+        if (addressing_mode.format && addressing_mode.format[0] != '\0') {
+            if (total_bytes == 2) {
                 snprintf(t.operand, sizeof t.operand,
-                        opcode.operand_fmt,
+                        addressing_mode.format,
                         bytes[1]);
-            } else if (opcode.bytes == 3) {
+            } else if (total_bytes == 3) {
                 uint16_t operand =
                     (uint16_t)bytes[1] |
                     ((uint16_t)bytes[2] << 8);
 
                 snprintf(t.operand, sizeof t.operand,
-                        opcode.operand_fmt,
+                        addressing_mode.format,
                         operand);
             }
         }
     }
 
-    Operand op = opcode.address(cpu);
+    Operand op = addressing_mode.address(cpu);
     int extra_cycles = opcode.execute(cpu, op);
 
     int cycles = opcode.cycles + extra_cycles;

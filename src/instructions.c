@@ -305,42 +305,38 @@ int adc(cpu6502 *cpu, Operand op) {
 int sbc(cpu6502 *cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
+  uint8_t old_a = cpu->A;
 
-  uint16_t binary_diff = (uint16_t)cpu->A + (uint8_t)(~value) + carry;
+  uint16_t binary_diff = (uint16_t)old_a + (uint8_t)(~value) + carry;
   uint8_t binary_result = (uint8_t)binary_diff;
 
   set_flag(cpu, FLAG_CARRY, binary_diff > 0xFF);
   set_flag(cpu, FLAG_ZERO, binary_result == 0);
   set_flag(cpu, FLAG_NEGATIVE, (binary_result & 0x80) != 0);
-
   set_flag(cpu, FLAG_OVERFLOW,
-    ((cpu->A ^ value) & (cpu->A ^ binary_result) & 0x80) != 0
+    ((old_a ^ value) & (old_a ^ binary_result) & 0x80) != 0
   );
 
   if (get_flag(cpu, FLAG_DECIMAL_MODE)) {
-    int16_t low_nibble =
-      (cpu->A & 0x0F) - (value & 0x0F) - (1 - carry);
+    int16_t al = (old_a & 0x0F) - (value & 0x0F) - (1 - carry);
+    int16_t ah = (old_a >> 4) - (value >> 4);
 
-    int16_t high_nibble =
-      (cpu->A & 0xF0) - (value & 0xF0);
-
-    if (low_nibble < 0) {
-      low_nibble -= 0x06;
-      high_nibble -= 0x10;
+    if (al < 0) {
+      al -= 6;
+      ah -= 1;
     }
 
-    if (high_nibble < 0) {
-      high_nibble -= 0x60;
+    if (ah < 0) {
+      ah -= 6;
     }
 
-    cpu->A = (uint8_t)((high_nibble & 0xF0) | (low_nibble & 0x0F));
+    cpu->A = (uint8_t)(((ah << 4) & 0xF0) | (al & 0x0F));
   } else {
     cpu->A = binary_result;
   }
 
   return 0;
 }
-
 int cmp(cpu6502 *cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t result = (uint16_t)cpu->A - value;

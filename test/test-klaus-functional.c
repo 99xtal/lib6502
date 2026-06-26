@@ -46,7 +46,7 @@ int main(void) {
   TestMachine machine;
   memset(&machine, 0, sizeof(machine));
 
-  if (load_binary(&machine, "test/roms/klaus-functional.bin", LOAD_ADDR) != 0) {
+  if (load_binary(&machine, "build/test/roms/klaus-functional.bin", LOAD_ADDR) != 0) {
     return 1;
   }
 
