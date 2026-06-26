@@ -94,6 +94,10 @@ typedef enum Inst {
   INST_SRE,
   INST_ALR,
   INST_RRA,
+  INST_ARR,
+  INST_SAX,
+  INST_XAA,
+  INST_AHX,
 } Inst;
 
 typedef struct {

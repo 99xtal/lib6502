@@ -704,6 +704,47 @@ int rra(cpu6502 *cpu, Operand op) {
   return 0;
 }
 
+int arr(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  cpu->A &= value;
+
+  uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
+
+  cpu->A = (cpu->A >> 1) | (carry_in << 7);
+
+  set_flag(cpu, FLAG_CARRY, cpu->A & 0x80);
+  set_flag(cpu, FLAG_OVERFLOW,
+      ((cpu->A >> 6) ^ (cpu->A >> 5)) & 1);
+
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0);
+  set_flag(cpu, FLAG_NEGATIVE, cpu->A & 0x80);
+}
+
+int sax(cpu6502 *cpu, Operand op) {
+  uint8_t result = cpu->A & cpu->X;
+
+  cpu->write(cpu->ctx, op.addr, result);
+}
+
+int xaa(cpu6502 *cpu, Operand op) {
+  cpu->A = cpu->X;
+
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  cpu->A &= value;
+
+  set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, cpu->A == 0 ? 1 : 0);
+
+  return 0;
+}
+
+int ahx(cpu6502 *cpu, Operand op) {
+  uint8_t result = cpu->A & cpu->X & (uint8_t)((op.addr & 0XFF00) >> 8);
+
+  cpu->write(cpu->ctx, op.addr, result);
+}
+
 const Instruction instructions[] = {
   /* Load/Store Operations */
   [INST_LDA] = { .mnemonic = "LDA", .execute = lda },
@@ -791,4 +832,8 @@ const Instruction instructions[] = {
   [INST_SRE] = { .mnemonic = "*SRE", .execute = sre },
   [INST_ALR] = { .mnemonic = "*ALR", .execute = alr },
   [INST_RRA] = { .mnemonic = "*RRA", .execute = rra },
+  [INST_ARR] = { .mnemonic = "*ARR", .execute = arr },
+  [INST_SAX] = { .mnemonic = "*SAX", .execute = sax },
+  [INST_XAA] = { .mnemonic = "*XAA", .execute = xaa },
+  [INST_AHX] = { .mnemonic = "*AHX", .execute = ahx },
 };
