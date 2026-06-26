@@ -87,5 +87,6 @@ int kil(cpu6502 *cpu, Operand op);  // Jams the CPU
 int slo(cpu6502 *cpu, Operand op);  // ASL and OR combo
 int anc(cpu6502 *cpu, Operand op);  // AND with carry like ASL
 int rla(cpu6502 *cpu, Operand op);
+int sre(cpu6502 *cpu, Operand op);
 
 #endif // INSTRUCTIONS_H
