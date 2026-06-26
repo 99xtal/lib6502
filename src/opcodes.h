@@ -5,13 +5,13 @@
 #include <lib6502/6502.h>
 
 #include "addressing.h"
+#include "instructions.h"
 #include "operand.h"
 
 typedef int (*exec_fn)(cpu6502 *cpu, Operand op);
 typedef struct {
-    const char *mnemonic;
+    Inst instruction;
     AddrMode addr_mode;
-    exec_fn execute;
     uint8_t cycles;
     int page_cross_penalty;
 } Opcode;

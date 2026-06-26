@@ -2,93 +2,105 @@
 #define INSTRUCTIONS_H
 
 #include <lib6502/6502.h>
-#include "opcodes.h"
 
-/** Load/Store Operations */
-int lda(cpu6502 *cpu, Operand op);  // Load accumulator
-int ldx(cpu6502 *cpu, Operand op);  // Load X register
-int ldy(cpu6502 *cpu, Operand op);  // Load Y register
-int sta(cpu6502 *cpu, Operand op);  // Store accumulator
-int stx(cpu6502 *cpu, Operand op);  // Store X register
-int sty(cpu6502 *cpu, Operand op);  // Store Y register
+#include "operand.h"
 
-/** Register transfers */
-int tax(cpu6502 *cpu, Operand op);  // Transfer accumulator to X
-int tay(cpu6502 *cpu, Operand op);  // Transfer accumulator to Y
-int txa(cpu6502 *cpu, Operand op);  // Transfer X to accumulator
-int tya(cpu6502 *cpu, Operand op);  // Transfer Y to accumulator
+typedef int (*exec_fn)(cpu6502 *cpu, Operand op);
 
-/** Stack Operations */
-int tsx(cpu6502 *cpu, Operand op);  // Transfer stack pointer to X
-int txs(cpu6502 *cpu, Operand op);  // Transfer X to stack pointer
-int pha(cpu6502 *cpu, Operand op);  // Push accumulator on stack
-int php(cpu6502 *cpu, Operand op);  // Push processor status on stack
-int pla(cpu6502 *cpu, Operand op);  // Pull accumulator from stack
-int plp(cpu6502 *cpu, Operand op);  // Pull processor status from stack
+typedef enum Inst {
+  /** Load/Store Operations */
+  INST_LDA,
+  INST_LDX,
+  INST_LDY,
+  INST_STA,
+  INST_STX,
+  INST_STY,
 
-/** Logical */
-int and(cpu6502 *cpu, Operand op);  // Logical AND
-int eor(cpu6502 *cpu, Operand op);  // Exclusive OR
-int ora(cpu6502 *cpu, Operand op);  // Logical Inclusive OR
-int bit(cpu6502 *cpu, Operand op);  // Bit Test
+  /** Register Transfers */
+  INST_TAX,
+  INST_TAY,
+  INST_TXA,
+  INST_TYA,
 
-/** Arithmetic */
-int adc(cpu6502 *cpu, Operand op);  // Add with Carry
-int sbc(cpu6502 *cpu, Operand op);  // Subtract with Carry
-int cmp(cpu6502 *cpu, Operand op);  // Compare accumulator
-int cpx(cpu6502 *cpu, Operand op);  // Compare X register
-int cpy(cpu6502 *cpu, Operand op);  // Compare Y register
+  /** Stack Operations */
+  INST_TSX,
+  INST_TXS,
+  INST_PHA,
+  INST_PHP,
+  INST_PLA,
+  INST_PLP,
 
-/** Increments & Decrements */
-int inc(cpu6502 *cpu, Operand op);  // Increment a memory location
-int inx(cpu6502 *cpu, Operand op);  // Increment the X register
-int iny(cpu6502 *cpu, Operand op);  // Increment the Y register
-int dec(cpu6502 *cpu, Operand op);  // Decrement a memory location
-int dex(cpu6502 *cpu, Operand op);  // Decrement the X register
-int dey(cpu6502 *cpu, Operand op);  // Decrement the Y register
+  /** Logical */
+  INST_AND,
+  INST_EOR,
+  INST_ORA,
+  INST_BIT,
 
-/** Shifts */
-int asl(cpu6502 *cpu, Operand op);  // Arithmetic Shift Left
-int lsr(cpu6502 *cpu, Operand op);  // Logical Shift Right
-int rol(cpu6502 *cpu, Operand op);  // Rotate Left
-int ror(cpu6502 *cpu, Operand op);  // Rotate Right
+  /** Arithmetic */
+  INST_ADC,
+  INST_SBC,
+  INST_CMP,
+  INST_CPX,
+  INST_CPY,
 
-/** Jumps & Calls */
-int jmp(cpu6502 *cpu, Operand op);  // Jump to another location
-int jsr(cpu6502 *cpu, Operand op);  // Jump to a subroutine
-int rts(cpu6502 *cpu, Operand op);  // Return from subroutine
+  /** Increments & Decrements */
+  INST_INC,
+  INST_INX,
+  INST_INY,
+  INST_DEC,
+  INST_DEX,
+  INST_DEY,
 
-/** Branches */
-int bcc(cpu6502 *cpu, Operand op);  // Branch if carry flag clear
-int bcs(cpu6502 *cpu, Operand op);  // Branch if carry flag set
-int beq(cpu6502 *cpu, Operand op);  // Branch if zero flag set
-int bmi(cpu6502 *cpu, Operand op);  // Branch if negative flag set
-int bne(cpu6502 *cpu, Operand op);  // Branch if zero flag clear
-int bpl(cpu6502 *cpu, Operand op);  // Branch if negative flag clear
-int bvc(cpu6502 *cpu, Operand op);  // Branch if overflow flag clear
-int bvs(cpu6502 *cpu, Operand op);  // Branch if overflow flag set
+  /** Shifts */
+  INST_ASL,
+  INST_LSR,
+  INST_ROL,
+  INST_ROR,
 
-/** Status Flag Changes */
-int clc(cpu6502 *cpu, Operand op);  // Clear carry flag
-int cld(cpu6502 *cpu, Operand op);  // Clear decimal mode flag
-int cli(cpu6502 *cpu, Operand op);  // Clear interrupt disable flag
-int clv(cpu6502 *cpu, Operand op);  // Clear overflow flag
-int sec(cpu6502 *cpu, Operand op);  // Set carry flag
-int sed(cpu6502 *cpu, Operand op);  // Set decimal mode flag
-int sei(cpu6502 *cpu, Operand op);  // Set interrupt disable flag
+  /** Jumps & Calls */
+  INST_JMP,
+  INST_JSR,
+  INST_RTS,
 
-/** System Functions */
-int brk(cpu6502 *cpu, Operand op);  // Force an interrupt
-int nop(cpu6502 *cpu, Operand op);  // No operation
-int rti(cpu6502 *cpu, Operand op);  // Return from interrupt
+  /** Branches */
+  INST_BCC,
+  INST_BCS,
+  INST_BEQ,
+  INST_BMI,
+  INST_BNE,
+  INST_BPL,
+  INST_BVC,
+  INST_BVS,
 
-/** Undocumented Functions */
-int kil(cpu6502 *cpu, Operand op);  // Jams the CPU
-int slo(cpu6502 *cpu, Operand op);  // ASL and OR combo
-int anc(cpu6502 *cpu, Operand op);  // AND with carry like ASL
-int rla(cpu6502 *cpu, Operand op);
-int sre(cpu6502 *cpu, Operand op);
-int alr(cpu6502 *cpu, Operand op);  // AND + LSR
-int rra(cpu6502 *cpu, Operand op);  // ROR + ADC
+  /** Status Flag Changes */
+  INST_CLC,
+  INST_CLD,
+  INST_CLI,
+  INST_CLV,
+  INST_SEC,
+  INST_SED,
+  INST_SEI,
+
+  /** System Functions */
+  INST_BRK,
+  INST_NOP,
+  INST_RTI,
+
+  /** Undocumented Instructions */
+  INST_KIL,
+  INST_SLO,
+  INST_ANC,
+  INST_RLA,
+  INST_SRE,
+  INST_ALR,
+  INST_RRA,
+} Inst;
+
+typedef struct {
+  exec_fn execute;
+  const char *mnemonic;
+} Instruction;
+
+extern const Instruction instructions[];
 
 #endif // INSTRUCTIONS_H

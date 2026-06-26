@@ -1,5 +1,7 @@
 #include <lib6502/6502.h>
+
 #include "flags.h"
+#include "instructions.h"
 #include "opcodes.h"
 #include "stack.h"
 #include "vectors.h"
@@ -701,3 +703,92 @@ int rra(cpu6502 *cpu, Operand op) {
 
   return 0;
 }
+
+const Instruction instructions[] = {
+  /* Load/Store Operations */
+  [INST_LDA] = { .mnemonic = "LDA", .execute = lda },
+  [INST_LDX] = { .mnemonic = "LDX", .execute = ldx },
+  [INST_LDY] = { .mnemonic = "LDY", .execute = ldy },
+  [INST_STA] = { .mnemonic = "STA", .execute = sta },
+  [INST_STX] = { .mnemonic = "STX", .execute = stx },
+  [INST_STY] = { .mnemonic = "STY", .execute = sty },
+
+  /* Register Transfers */
+  [INST_TAX] = { .mnemonic = "TAX", .execute = tax },
+  [INST_TAY] = { .mnemonic = "TAY", .execute = tay },
+  [INST_TXA] = { .mnemonic = "TXA", .execute = txa },
+  [INST_TYA] = { .mnemonic = "TYA", .execute = tya },
+
+  /* Stack Operations */
+  [INST_TSX] = { .mnemonic = "TSX", .execute = tsx },
+  [INST_TXS] = { .mnemonic = "TXS", .execute = txs },
+  [INST_PHA] = { .mnemonic = "PHA", .execute = pha },
+  [INST_PHP] = { .mnemonic = "PHP", .execute = php },
+  [INST_PLA] = { .mnemonic = "PLA", .execute = pla },
+  [INST_PLP] = { .mnemonic = "PLP", .execute = plp },
+
+  /* Logical */
+  [INST_AND] = { .mnemonic = "AND", .execute = and },
+  [INST_EOR] = { .mnemonic = "EOR", .execute = eor },
+  [INST_ORA] = { .mnemonic = "ORA", .execute = ora },
+  [INST_BIT] = { .mnemonic = "BIT", .execute = bit },
+
+  /* Arithmetic */
+  [INST_ADC] = { .mnemonic = "ADC", .execute = adc },
+  [INST_SBC] = { .mnemonic = "SBC", .execute = sbc },
+  [INST_CMP] = { .mnemonic = "CMP", .execute = cmp },
+  [INST_CPX] = { .mnemonic = "CPX", .execute = cpx },
+  [INST_CPY] = { .mnemonic = "CPY", .execute = cpy },
+
+  /* Increments & Decrements */
+  [INST_INC] = { .mnemonic = "INC", .execute = inc },
+  [INST_INX] = { .mnemonic = "INX", .execute = inx },
+  [INST_INY] = { .mnemonic = "INY", .execute = iny },
+  [INST_DEC] = { .mnemonic = "DEC", .execute = dec },
+  [INST_DEX] = { .mnemonic = "DEX", .execute = dex },
+  [INST_DEY] = { .mnemonic = "DEY", .execute = dey },
+
+  /* Shifts */
+  [INST_ASL] = { .mnemonic = "ASL", .execute = asl },
+  [INST_LSR] = { .mnemonic = "LSR", .execute = lsr },
+  [INST_ROL] = { .mnemonic = "ROL", .execute = rol },
+  [INST_ROR] = { .mnemonic = "ROR", .execute = ror },
+
+  /* Jumps & Calls */
+  [INST_JMP] = { .mnemonic = "JMP", .execute = jmp },
+  [INST_JSR] = { .mnemonic = "JSR", .execute = jsr },
+  [INST_RTS] = { .mnemonic = "RTS", .execute = rts },
+
+  /* Branches */
+  [INST_BCC] = { .mnemonic = "BCC", .execute = bcc },
+  [INST_BCS] = { .mnemonic = "BCS", .execute = bcs },
+  [INST_BEQ] = { .mnemonic = "BEQ", .execute = beq },
+  [INST_BMI] = { .mnemonic = "BMI", .execute = bmi },
+  [INST_BNE] = { .mnemonic = "BNE", .execute = bne },
+  [INST_BPL] = { .mnemonic = "BPL", .execute = bpl },
+  [INST_BVC] = { .mnemonic = "BVC", .execute = bvc },
+  [INST_BVS] = { .mnemonic = "BVS", .execute = bvs },
+
+  /* Status Flag Changes */
+  [INST_CLC] = { .mnemonic = "CLC", .execute = clc },
+  [INST_CLD] = { .mnemonic = "CLD", .execute = cld },
+  [INST_CLI] = { .mnemonic = "CLI", .execute = cli },
+  [INST_CLV] = { .mnemonic = "CLV", .execute = clv },
+  [INST_SEC] = { .mnemonic = "SEC", .execute = sec },
+  [INST_SED] = { .mnemonic = "SED", .execute = sed },
+  [INST_SEI] = { .mnemonic = "SEI", .execute = sei },
+
+  /* System Functions */
+  [INST_BRK] = { .mnemonic = "BRK", .execute = brk },
+  [INST_NOP] = { .mnemonic = "NOP", .execute = nop },
+  [INST_RTI] = { .mnemonic = "RTI", .execute = rti },
+
+  /* Undocumented Instructions */
+  [INST_KIL] = { .mnemonic = "*KIL", .execute = kil },
+  [INST_SLO] = { .mnemonic = "*SLO", .execute = slo },
+  [INST_ANC] = { .mnemonic = "*ANC", .execute = anc },
+  [INST_RLA] = { .mnemonic = "*RLA", .execute = rla },
+  [INST_SRE] = { .mnemonic = "*SRE", .execute = sre },
+  [INST_ALR] = { .mnemonic = "*ALR", .execute = alr },
+  [INST_RRA] = { .mnemonic = "*RRA", .execute = rra },
+};

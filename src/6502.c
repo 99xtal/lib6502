@@ -36,8 +36,8 @@ int cpu6502_step(cpu6502 *cpu) {
         return 1; // burn a cycle
     }
     
+    // choose which instruction set variant to use
     const Opcode *opcode_table;
-
     switch (cpu->variant) {
         case CPU6502_VARIANT_NMOS:
             opcode_table = opcode_table_nmos;
@@ -48,10 +48,14 @@ int cpu6502_step(cpu6502 *cpu) {
     }
 
     uint16_t initial_pc = cpu->PC;
+
+    // read opcode
     uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC++);
     Opcode opcode = opcode_table[opcode_byte];
     AddressingMode addressing_mode = addr_modes[opcode.addr_mode];
+    Instruction instruction = instructions[opcode.instruction];
 
+    // build trace
     cpu6502_trace t = {0};
     uint8_t bytes[3];
     if (cpu->trace) {
@@ -64,7 +68,7 @@ int cpu6502_step(cpu6502 *cpu) {
 
         t.PC = initial_pc,
         t.bytes_count = total_bytes,
-        t.mnemonic = opcode.mnemonic,
+        t.mnemonic = instruction.mnemonic,
         t.A = cpu->A,
         t.X = cpu->X,
         t.Y = cpu->Y,
@@ -89,8 +93,9 @@ int cpu6502_step(cpu6502 *cpu) {
         }
     }
 
+    // execute instruction
     Operand op = addressing_mode.address(cpu);
-    int extra_cycles = opcode.execute(cpu, op);
+    int extra_cycles = instruction.execute(cpu, op);
 
     int cycles = opcode.cycles + extra_cycles;
 
