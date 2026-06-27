@@ -29,6 +29,8 @@ int cpu6502_reset(cpu6502 *cpu) {
     cpu->SP = 0xFD; // Reset stack pointer to 0x01FD
     cpu->PC = reset_position;
 
+    set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
+
     return clock_cycles;
 }
 
