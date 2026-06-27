@@ -262,7 +262,7 @@ int plp(cpu6502 *cpu, Operand op __attribute__((unused)) ) {
 void execute_adc(cpu6502 *cpu, uint8_t value) {
   uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
 
-  if (get_flag(cpu, FLAG_DECIMAL_MODE)) {
+  if (get_flag(cpu, FLAG_DECIMAL_MODE) && cpu->variant != CPU6502_VARIANT_RP2A03) {
     uint16_t low_nibble = (cpu->A & 0x0F) + (value & 0x0F) + carry_in;
     if (low_nibble > 0x09) {
       low_nibble += 0x06;
@@ -320,7 +320,7 @@ void execute_sbc(cpu6502 *cpu, uint8_t value) {
     ((old_a ^ value) & (old_a ^ binary_result) & 0x80) != 0
   );
 
-  if (get_flag(cpu, FLAG_DECIMAL_MODE)) {
+  if (get_flag(cpu, FLAG_DECIMAL_MODE) && cpu->variant != CPU6502_VARIANT_RP2A03) {
     int16_t al = (old_a & 0x0F) - (value & 0x0F) - (1 - carry);
     int16_t ah = (old_a >> 4) - (value >> 4);
 

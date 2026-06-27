@@ -43,6 +43,7 @@ int cpu6502_step(cpu6502 *cpu) {
     const Opcode *opcode_table;
     switch (cpu->variant) {
         case CPU6502_VARIANT_NMOS:
+        case CPU6502_VARIANT_RP2A03:
             opcode_table = opcode_table_nmos;
             break;
         case CPU6502_VARIANT_STRICT:
