@@ -186,7 +186,7 @@ const AddressingMode addr_modes[13] = {
   [ADDR_IND]    = { .type = ADDR_IND,   .address = addr_indirect,     .format = "($%04X)",    .bytes = 2 },
   [ADDR_IND_X]  = { .type = ADDR_IND_X, .address = addr_indirect_x,   .format = "($%02X,X)",  .bytes = 1 },
   [ADDR_IND_Y]  = { .type = ADDR_ABS_Y, .address = addr_indirect_y,   .format = "($%02X),Y",  .bytes = 1 },
-  [ADDR_REL]    = { .type = ADDR_REL,   .address = addr_rel,          .format = "$%04X",      .bytes = 2 },
+  [ADDR_REL]    = { .type = ADDR_REL,   .address = addr_rel,          .format = "$%04X",      .bytes = 1 },
   [ADDR_ZP]     = { .type = ADDR_ZP,    .address = addr_zero_page,    .format = "$%02X",      .bytes = 1 },
   [ADDR_ZP_X]   = { .type = ADDR_ZP_X,  .address = addr_zero_page_x,  .format = "$%02X,X",    .bytes = 1 },
   [ADDR_ZP_Y]   = { .type = ADDR_ZP_Y,  .address = addr_zero_page_y,  .format = "$%02X,Y",    .bytes = 1 }

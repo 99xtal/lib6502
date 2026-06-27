@@ -252,7 +252,9 @@ int pla(cpu6502 *cpu, Operand op __attribute__((unused))) {
 }
 
 int plp(cpu6502 *cpu, Operand op __attribute__((unused)) ) {
-  cpu->status = stack_pop_u8(cpu);
+  uint8_t status_value = stack_pop_u8(cpu);
+
+  cpu->status = (status_value & ~FLAG_BREAK) | FLAG_UNUSED;
 
   return 0;
 }
