@@ -56,6 +56,8 @@ int cpu6502_step(cpu6502 *cpu) {
     AddressingMode addressing_mode = addr_modes[opcode.addr_mode];
     Instruction instruction = instructions[opcode.instruction];
 
+    Operand op = addressing_mode.address(cpu);
+
     // build trace
     cpu6502_trace t = {0};
     uint8_t bytes[3];
@@ -64,13 +66,13 @@ int cpu6502_step(cpu6502 *cpu) {
             &t,
             cpu,
             initial_pc,
+            &op,
             &addressing_mode,
             &instruction
         );
     }
 
     // execute instruction
-    Operand op = addressing_mode.address(cpu);
     int extra_cycles = instruction.execute(cpu, op);
 
     int cycles = opcode.cycles + extra_cycles;

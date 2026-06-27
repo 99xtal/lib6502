@@ -176,17 +176,17 @@ Operand addr_acc(cpu6502 *cpu __attribute__((unused))) {
 }
 
 const AddressingMode addr_modes[13] = {
-  [ADDR_ABS]    = { .address = addr_abs,          .format = "$%04X",      .bytes = 2 },
-  [ADDR_ABS_X]  = { .address = addr_abs_x,        .format = "$%04X,X",    .bytes = 2 },
-  [ADDR_ABS_Y]  = { .address = addr_abs_y,        .format = "$%04X,Y",    .bytes = 2 },
-  [ADDR_ACC]    = { .address = addr_acc,          .format = "A",          .bytes = 0 },
-  [ADDR_IMM]    = { .address = addr_imm,          .format = "#$%02X",     .bytes = 1 },
-  [ADDR_IMP]    = { .address = addr_implied,      .format = "",           .bytes = 0 },
-  [ADDR_IND]    = { .address = addr_indirect,     .format = "($%04X)",    .bytes = 2 },
-  [ADDR_IND_X]  = { .address = addr_indirect_x,   .format = "($%02X,X)",  .bytes = 1 },
-  [ADDR_IND_Y]  = { .address = addr_indirect_y,   .format = "($%02X),Y",  .bytes = 1 },
-  [ADDR_REL]    = { .address = addr_rel,          .format = "$%04X",      .bytes = 1 },
-  [ADDR_ZP]     = { .address = addr_zero_page,    .format = "$%02X",      .bytes = 1 },
-  [ADDR_ZP_X]   = { .address = addr_zero_page_x,  .format = "$%02X,X",    .bytes = 1 },
-  [ADDR_ZP_Y]   = { .address = addr_zero_page_y,  .format = "$%02X,Y",    .bytes = 1 }
+  [ADDR_ABS]    = { .type = ADDR_ABS,   .address = addr_abs,          .format = "$%04X",      .bytes = 2 },
+  [ADDR_ABS_X]  = { .type = ADDR_ABS_X, .address = addr_abs_x,        .format = "$%04X,X",    .bytes = 2 },
+  [ADDR_ABS_Y]  = { .type = ADDR_ABS_Y, .address = addr_abs_y,        .format = "$%04X,Y",    .bytes = 2 },
+  [ADDR_ACC]    = { .type = ADDR_ACC,   .address = addr_acc,          .format = "A",          .bytes = 0 },
+  [ADDR_IMM]    = { .type = ADDR_IMM,   .address = addr_imm,          .format = "#$%02X",     .bytes = 1 },
+  [ADDR_IMP]    = { .type = ADDR_IMP,   .address = addr_implied,      .format = "",           .bytes = 0 },
+  [ADDR_IND]    = { .type = ADDR_IND,   .address = addr_indirect,     .format = "($%04X)",    .bytes = 2 },
+  [ADDR_IND_X]  = { .type = ADDR_IND_X, .address = addr_indirect_x,   .format = "($%02X,X)",  .bytes = 1 },
+  [ADDR_IND_Y]  = { .type = ADDR_ABS_Y, .address = addr_indirect_y,   .format = "($%02X),Y",  .bytes = 1 },
+  [ADDR_REL]    = { .type = ADDR_REL,   .address = addr_rel,          .format = "$%04X",      .bytes = 1 },
+  [ADDR_ZP]     = { .type = ADDR_ZP,    .address = addr_zero_page,    .format = "$%02X",      .bytes = 1 },
+  [ADDR_ZP_X]   = { .type = ADDR_ZP_X,  .address = addr_zero_page_x,  .format = "$%02X,X",    .bytes = 1 },
+  [ADDR_ZP_Y]   = { .type = ADDR_ZP_Y,  .address = addr_zero_page_y,  .format = "$%02X,Y",    .bytes = 1 }
 };
