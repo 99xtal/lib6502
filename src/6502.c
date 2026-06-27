@@ -62,7 +62,7 @@ int cpu6502_step(cpu6502 *cpu) {
     if (cpu->trace) {
         build_trace(
             &t,
-            &cpu,
+            cpu,
             initial_pc,
             &addressing_mode,
             &instruction
