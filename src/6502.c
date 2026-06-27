@@ -6,6 +6,7 @@
 #include "flags.h"
 #include "opcodes.h"
 #include "stack.h"
+#include "trace.h"
 #include "vectors.h"
 
 void cpu6502_init(cpu6502 *cpu, cpu6502_variant variant, cpu6502_read_fn read, cpu6502_write_fn write, void *ctx) {
@@ -59,38 +60,13 @@ int cpu6502_step(cpu6502 *cpu) {
     cpu6502_trace t = {0};
     uint8_t bytes[3];
     if (cpu->trace) {
-        uint8_t total_bytes = addressing_mode.bytes + 1;
-
-        for (uint8_t i = 0; i < total_bytes; i++) {
-            uint16_t p = initial_pc + i;
-            bytes[i] = cpu->read(cpu->ctx, p);
-        }
-
-        t.PC = initial_pc,
-        t.bytes_count = total_bytes,
-        t.mnemonic = instruction.mnemonic,
-        t.A = cpu->A,
-        t.X = cpu->X,
-        t.Y = cpu->Y,
-        t.status = cpu->status,
-        t.SP = cpu->SP,
-        memcpy(t.bytes, bytes, sizeof bytes);
-
-        if (addressing_mode.format && addressing_mode.format[0] != '\0') {
-            if (total_bytes == 2) {
-                snprintf(t.operand, sizeof t.operand,
-                        addressing_mode.format,
-                        bytes[1]);
-            } else if (total_bytes == 3) {
-                uint16_t operand =
-                    (uint16_t)bytes[1] |
-                    ((uint16_t)bytes[2] << 8);
-
-                snprintf(t.operand, sizeof t.operand,
-                        addressing_mode.format,
-                        operand);
-            }
-        }
+        build_trace(
+            &t,
+            &cpu,
+            initial_pc,
+            &addressing_mode,
+            &instruction
+        );
     }
 
     // execute instruction
