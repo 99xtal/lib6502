@@ -98,6 +98,14 @@ typedef enum Inst {
   INST_SAX,
   INST_XAA,
   INST_AHX,
+  INST_TAS,
+  INST_SHY,
+  INST_SHX,
+  INST_LAX,
+  INST_LAS,
+  INST_DCP,
+  INST_AXS,
+  INST_ISC,
 } Inst;
 
 typedef struct {

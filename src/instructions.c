@@ -304,8 +304,7 @@ int adc(cpu6502 *cpu, Operand op) {
   return 0;
 }
 
-int sbc(cpu6502 *cpu, Operand op) {
-  uint8_t value = cpu->read(cpu->ctx, op.addr);
+void execute_sbc(cpu6502 *cpu, uint8_t value) {
   uint8_t carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
   uint8_t old_a = cpu->A;
 
@@ -336,6 +335,12 @@ int sbc(cpu6502 *cpu, Operand op) {
   } else {
     cpu->A = binary_result;
   }
+}
+
+int sbc(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  execute_sbc(cpu, value);
 
   return 0;
 }
@@ -719,12 +724,16 @@ int arr(cpu6502 *cpu, Operand op) {
 
   set_flag(cpu, FLAG_ZERO, cpu->A == 0);
   set_flag(cpu, FLAG_NEGATIVE, cpu->A & 0x80);
+
+  return 0;
 }
 
 int sax(cpu6502 *cpu, Operand op) {
   uint8_t result = cpu->A & cpu->X;
 
   cpu->write(cpu->ctx, op.addr, result);
+
+  return 0;
 }
 
 int xaa(cpu6502 *cpu, Operand op) {
@@ -740,9 +749,86 @@ int xaa(cpu6502 *cpu, Operand op) {
 }
 
 int ahx(cpu6502 *cpu, Operand op) {
-  uint8_t result = cpu->A & cpu->X & (uint8_t)((op.addr & 0XFF00) >> 8);
+  uint8_t high = (uint8_t)((op.addr + 1) >> 8);
+  uint8_t result = cpu->A & cpu->X & high;
 
   cpu->write(cpu->ctx, op.addr, result);
+
+  return 0;
+}
+
+int tas(cpu6502 *cpu, Operand op) {
+  cpu->SP = cpu->A & cpu->X;
+  uint8_t high = (uint8_t)((op.addr + 1) >> 8);
+  
+  cpu->write(cpu->ctx, op.addr, cpu->SP & high);
+
+  return 0;
+}
+
+int shy(cpu6502 *cpu, Operand op) {
+  uint8_t high = (uint8_t)((op.addr + 1) >> 8);
+
+  cpu->write(cpu->ctx, op.addr, cpu->Y & high);
+
+  return 0;
+}
+
+int shx(cpu6502 *cpu, Operand op) {
+  uint8_t high = (uint8_t)((op.addr + 1) >> 8);
+
+  cpu->write(cpu->ctx, op.addr, cpu->X & high);
+
+  return 0;
+}
+
+int lax(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+
+  cpu->A = value;
+  cpu->X = value;
+
+  return 0;
+}
+
+int las(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr) & cpu->SP;
+
+  cpu->A = value;
+  cpu->X = value;
+  cpu->SP = value;
+
+  return 0;
+}
+
+int dcp(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t dec_result = value - 1;
+  cpu->write(cpu->ctx, op.addr, dec_result);
+
+  uint8_t cmp_result = (uint16_t)cpu->A - dec_result;
+
+  set_flag(cpu, FLAG_CARRY, cpu->A >= dec_result);
+  set_flag(cpu, FLAG_ZERO, cpu->A == dec_result);
+  set_flag(cpu, FLAG_NEGATIVE, (cmp_result & 0x80) != 0);
+
+  return 0;
+}
+
+int axs(cpu6502 *cpu, Operand op) {
+  cpu->write(cpu->ctx, op.addr, cpu->A & cpu->X);
+
+  return 0;
+}
+
+int isc(cpu6502 *cpu, Operand op) {
+  uint8_t value = cpu->read(cpu->ctx, op.addr);
+  uint8_t result = value + 1;
+  cpu->write(cpu->ctx, op.addr, result);
+
+  execute_sbc(cpu, result);
+
+  return 0;
 }
 
 const Instruction instructions[] = {
@@ -836,4 +922,12 @@ const Instruction instructions[] = {
   [INST_SAX] = { .mnemonic = "*SAX", .execute = sax },
   [INST_XAA] = { .mnemonic = "*XAA", .execute = xaa },
   [INST_AHX] = { .mnemonic = "*AHX", .execute = ahx },
+  [INST_TAS] = { .mnemonic = "*TAS", .execute = tas },
+  [INST_SHY] = { .mnemonic = "*SHY", .execute = shy },
+  [INST_SHX] = { .mnemonic = "*SHX", .execute = shx },
+  [INST_LAX] = { .mnemonic = "*LAX", .execute = lax },
+  [INST_LAS] = { .mnemonic = "*LAS", .execute = las },
+  [INST_DCP] = { .mnemonic = "*DCP", .execute = dcp },
+  [INST_AXS] = { .mnemonic = "*AXS", .execute = axs },
+  [INST_ISC] = { .mnemonic = "*ISC", .execute = isc },
 };
