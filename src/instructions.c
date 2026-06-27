@@ -458,15 +458,12 @@ int dey(cpu6502 *cpu, Operand op __attribute__((unused))) {
 }
 
 int branch(cpu6502 *cpu, Operand op, int condition) {
-  uint8_t raw = cpu->read(cpu->ctx, op.addr);
-  int8_t offset = (int8_t)raw;
-
   if(!condition) {
     return 0;
   }
 
   uint16_t old_pc = cpu->PC;
-  cpu->PC += offset;
+  cpu->PC = op.addr;
 
   // detect page cross
   if ((old_pc & 0xFF00) != (cpu->PC & 0xFF00)) {

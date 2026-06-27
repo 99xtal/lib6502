@@ -55,6 +55,9 @@ void format_operand(char *trace_operand, size_t trace_operand_size, cpu6502 *cpu
               cpu->read(cpu->ctx, op->addr)
       );
       break;
+    case ADDR_REL:
+      snprintf(trace_operand, trace_operand_size, addr_mode->format, op->addr);
+      break;
     default:
       if (total_bytes == 2) {
         snprintf(trace_operand, trace_operand_size, 
