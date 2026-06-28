@@ -63,13 +63,13 @@ int cpu6502_step(cpu6502 *cpu) {
 
     // build trace
     cpu6502_trace t = {0};
-    uint8_t bytes[3];
     if (cpu->trace) {
         build_trace(
             &t,
             cpu,
             initial_pc,
             &addressing_mode,
+            &op,
             &instruction
         );
     }

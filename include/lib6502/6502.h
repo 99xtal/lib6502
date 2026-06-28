@@ -18,6 +18,7 @@ typedef struct cput6502_trace {
     uint16_t PC;
     uint8_t bytes[3];
     size_t bytes_count;
+    bool is_undocumented_inst;
     const char *mnemonic;
     char operand[25];
     uint8_t SP;

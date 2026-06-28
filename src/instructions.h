@@ -2,6 +2,7 @@
 #define INSTRUCTIONS_H
 
 #include <lib6502/6502.h>
+#include <stdbool.h>
 
 #include "operand.h"
 
@@ -111,6 +112,7 @@ typedef enum Inst {
 typedef struct {
   exec_fn execute;
   const char *mnemonic;
+  bool is_undocumented;
 } Instruction;
 
 extern const Instruction instructions[];

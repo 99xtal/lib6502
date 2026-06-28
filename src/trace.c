@@ -3,13 +3,14 @@
 
 #include "trace.h"
 
-void format_operand(char *trace_operand, size_t trace_operand_size, cpu6502 *cpu, AddressingMode *addr_mode, int initial_pc);
+void format_operand(char *trace_operand, size_t trace_operand_size, cpu6502 *cpu, AddressingMode *addr_mode, Operand *op, uint16_t initial_pc);
 
 void build_trace(
   cpu6502_trace *t,
   cpu6502 *cpu,
   uint16_t initial_pc,
   AddressingMode *addr_mode,
+  Operand *op,
   Instruction *instruction
 ) {
   uint8_t bytes[3];
@@ -23,6 +24,7 @@ void build_trace(
 
   t->PC = initial_pc,
   t->bytes_count = total_bytes,
+  t->is_undocumented_inst = instruction->is_undocumented;
   t->mnemonic = instruction->mnemonic,
   t->A = cpu->A,
   t->X = cpu->X,
@@ -32,11 +34,11 @@ void build_trace(
   memcpy(t->bytes, bytes, sizeof bytes);
 
   if (addr_mode->format && addr_mode->format[0] != '\0') {
-    format_operand(t->operand, sizeof t->operand, cpu, addr_mode, initial_pc);
+    format_operand(t->operand, sizeof t->operand, cpu, addr_mode, op, initial_pc);
   }
 }
 
-void format_operand(char *trace_operand, size_t trace_operand_size, cpu6502 *cpu, AddressingMode *addr_mode, int initial_pc) {
+void format_operand(char *trace_operand, size_t trace_operand_size, cpu6502 *cpu, AddressingMode *addr_mode, Operand *op, uint16_t initial_pc) {
   uint8_t bytes[3];
   uint8_t total_bytes = addr_mode->bytes + 1;
 
@@ -44,6 +46,11 @@ void format_operand(char *trace_operand, size_t trace_operand_size, cpu6502 *cpu
     uint16_t p = initial_pc + i;
     bytes[i] = cpu->read(cpu->ctx, p);
   }
+
+  if(addr_mode->type == ADDR_REL) {
+    snprintf(trace_operand, trace_operand_size, addr_mode->format, op->addr);
+    return;
+  };
 
   uint16_t raw16 = (uint16_t)bytes[1] | ((uint16_t)bytes[2] << 8);
 
@@ -55,5 +62,10 @@ void format_operand(char *trace_operand, size_t trace_operand_size, cpu6502 *cpu
     snprintf(trace_operand, trace_operand_size, 
         addr_mode->format,
         raw16);
+  } else if (total_bytes == 1) {
+    snprintf(trace_operand, trace_operand_size,
+        addr_mode->format,
+        ""
+    );
   }
 }

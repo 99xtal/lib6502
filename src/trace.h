@@ -12,6 +12,7 @@ void build_trace(
   cpu6502 *cpu,
   uint16_t initial_pc,
   AddressingMode *addr_mode,
+  Operand *op,
   Instruction *instruction
 );
 
