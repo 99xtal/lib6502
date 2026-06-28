@@ -69,7 +69,6 @@ int cpu6502_step(cpu6502 *cpu) {
             &t,
             cpu,
             initial_pc,
-            &op,
             &addressing_mode,
             &instruction
         );
