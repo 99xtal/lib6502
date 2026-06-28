@@ -107,6 +107,8 @@ typedef enum Inst {
   INST_DCP,
   INST_AXS,
   INST_ISC,
+  INST_NOP_UND,
+  INST_SBC_UND,
 } Inst;
 
 typedef struct {

@@ -701,6 +701,8 @@ int rra(cpu6502 *cpu, Operand op) {
 
   result |= carry_bit << 7;
 
+  set_flag(cpu, FLAG_CARRY, value & 0x01);   // ROR carry-out
+  
   cpu->write(cpu->ctx, op.addr, result);
 
   execute_adc(cpu, result);
@@ -787,6 +789,9 @@ int lax(cpu6502 *cpu, Operand op) {
   cpu->A = value;
   cpu->X = value;
 
+  set_flag(cpu, FLAG_NEGATIVE, (value & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, value == 0 ? 1 : 0);
+
   return 0;
 }
 
@@ -796,6 +801,9 @@ int las(cpu6502 *cpu, Operand op) {
   cpu->A = value;
   cpu->X = value;
   cpu->SP = value;
+
+  set_flag(cpu, FLAG_NEGATIVE, (value & 0x80) != 0);
+  set_flag(cpu, FLAG_ZERO, value == 0 ? 1 : 0);
 
   return 0;
 }
@@ -929,4 +937,6 @@ const Instruction instructions[] = {
   [INST_DCP] = { .mnemonic = "DCP", .execute = dcp , .is_undocumented = 1 },
   [INST_AXS] = { .mnemonic = "AXS", .execute = axs , .is_undocumented = 1 },
   [INST_ISC] = { .mnemonic = "ISC", .execute = isc , .is_undocumented = 1 },
+  [INST_NOP_UND] = { .mnemonic = "NOP", .execute = nop, .is_undocumented = 1 },
+  [INST_SBC_UND] = { .mnemonic = "SBC", .execute = sbc, .is_undocumented = 1 },
 };
