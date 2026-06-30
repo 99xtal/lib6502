@@ -4,12 +4,12 @@
 
 #include "opcodes.h"
 
-Operand addr_imm(cpu6502* cpu) {
+Operand addr_imm(CPU6502* cpu) {
   return (Operand){
       .type = OPERAND_MEMORY, .addr = cpu->PC++, .page_crossed = 0};
 }
 
-Operand addr_abs(cpu6502* cpu) {
+Operand addr_abs(CPU6502* cpu) {
   uint8_t low = cpu->read(cpu->ctx, cpu->PC);
   cpu->PC++;
   uint8_t high = cpu->read(cpu->ctx, cpu->PC);
@@ -20,7 +20,7 @@ Operand addr_abs(cpu6502* cpu) {
   return (Operand){.type = OPERAND_MEMORY, .addr = addr, .page_crossed = 0};
 }
 
-Operand addr_abs_x(cpu6502* cpu) {
+Operand addr_abs_x(CPU6502* cpu) {
   uint8_t low = cpu->read(cpu->ctx, cpu->PC++);
   uint8_t high = cpu->read(cpu->ctx, cpu->PC++);
 
@@ -32,7 +32,7 @@ Operand addr_abs_x(cpu6502* cpu) {
                    .page_crossed = (base & 0xFF00) != (addr & 0xFF00)};
 }
 
-Operand addr_abs_y(cpu6502* cpu) {
+Operand addr_abs_y(CPU6502* cpu) {
   uint8_t low = cpu->read(cpu->ctx, cpu->PC++);
   uint8_t high = cpu->read(cpu->ctx, cpu->PC++);
 
@@ -44,7 +44,7 @@ Operand addr_abs_y(cpu6502* cpu) {
                    .page_crossed = (base & 0xFF00) != (addr & 0xFF00)};
 }
 
-Operand addr_indirect_x(cpu6502* cpu) {
+Operand addr_indirect_x(CPU6502* cpu) {
   uint8_t base = cpu->read(cpu->ctx, cpu->PC++);
 
   uint8_t zero_page_pointer = base + cpu->X;
@@ -57,7 +57,7 @@ Operand addr_indirect_x(cpu6502* cpu) {
                    .page_crossed = 0};
 }
 
-Operand addr_indirect_y(cpu6502* cpu) {
+Operand addr_indirect_y(CPU6502* cpu) {
   uint8_t pointer = cpu->read(cpu->ctx, cpu->PC++);
 
   uint8_t low = cpu->read(cpu->ctx, pointer);
@@ -71,32 +71,32 @@ Operand addr_indirect_y(cpu6502* cpu) {
                    .page_crossed = (base & 0xFF00) != (addr & 0xFF00)};
 }
 
-Operand addr_zero_page(cpu6502* cpu) {
+Operand addr_zero_page(CPU6502* cpu) {
   uint8_t addr = cpu->read(cpu->ctx, cpu->PC);
   cpu->PC++;
 
   return (Operand){.type = OPERAND_MEMORY, .addr = addr, .page_crossed = 0};
 }
 
-Operand addr_zero_page_x(cpu6502* cpu) {
+Operand addr_zero_page_x(CPU6502* cpu) {
   uint8_t base = cpu->read(cpu->ctx, cpu->PC++);
   uint8_t addr = base + cpu->X;
 
   return (Operand){.type = OPERAND_MEMORY, .addr = addr, .page_crossed = 0};
 }
 
-Operand addr_zero_page_y(cpu6502* cpu) {
+Operand addr_zero_page_y(CPU6502* cpu) {
   uint8_t base = cpu->read(cpu->ctx, cpu->PC++);
   uint8_t addr = base + cpu->Y;
 
   return (Operand){.type = OPERAND_MEMORY, .addr = addr, .page_crossed = 0};
 }
 
-Operand addr_implied(cpu6502* cpu __attribute__((unused))) {
+Operand addr_implied(CPU6502* cpu __attribute__((unused))) {
   return (Operand){.type = OPERAND_MEMORY, .addr = 0, .page_crossed = 0};
 }
 
-Operand addr_indirect(cpu6502* cpu) {
+Operand addr_indirect(CPU6502* cpu) {
   uint8_t ptr_low = cpu->read(cpu->ctx, cpu->PC++);
   uint8_t ptr_high = cpu->read(cpu->ctx, cpu->PC++);
 
@@ -123,7 +123,7 @@ Operand addr_indirect(cpu6502* cpu) {
                    .page_crossed = 0};
 }
 
-Operand addr_rel(cpu6502* cpu) {
+Operand addr_rel(CPU6502* cpu) {
   uint16_t addr = cpu->PC;
   cpu->PC++;
 
@@ -134,7 +134,7 @@ Operand addr_rel(cpu6502* cpu) {
   };
 }
 
-Operand addr_acc(cpu6502* cpu __attribute__((unused))) {
+Operand addr_acc(CPU6502* cpu __attribute__((unused))) {
   return (Operand){
       .type = OPERAND_ACCUMULATOR,
       .addr = 0,

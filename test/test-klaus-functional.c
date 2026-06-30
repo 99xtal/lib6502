@@ -15,7 +15,7 @@
 #define MAX_STEPS 100000000
 #define ENABLE_TRACING 0
 
-void trace_console(void* trace_ctx, cpu6502_trace trace) {
+void trace_console(void* trace_ctx, CPU6502Trace trace) {
   char byte_str[10] = {0};
   int pos = 0;
 
@@ -38,7 +38,7 @@ int main(void) {
     return 1;
   }
 
-  cpu6502 cpu;
+  CPU6502 cpu;
   cpu6502_init(&cpu, CPU6502_VARIANT_STRICT, test_read, test_write, &machine);
   cpu6502_reset(&cpu);
 

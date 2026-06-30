@@ -5,7 +5,7 @@
 
 #include "operand.h"
 
-typedef int (*exec_fn)(cpu6502* cpu, Operand op);
+typedef int (*exec_fn)(CPU6502* cpu, Operand op);
 
 typedef enum Inst {
   /** Load/Store Operations */

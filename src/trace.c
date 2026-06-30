@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void build_trace(cpu6502_trace* t, cpu6502* cpu, uint16_t initial_pc,
+void build_trace(CPU6502Trace* t, CPU6502* cpu, uint16_t initial_pc,
                  AddressingMode* addr_mode, Instruction* instruction) {
   uint8_t bytes[3];
 

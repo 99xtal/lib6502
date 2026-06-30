@@ -18,7 +18,7 @@ static void bus_write(void* ctx, uint16_t address, uint8_t value) {
 
 int main(void) {
   struct test_bus bus = {0};
-  cpu6502 cpu = {0};
+  CPU6502 cpu = {0};
 
   bus.mem[0xFFFC] = 0x34;
   bus.mem[0xFFFD] = 0x12;

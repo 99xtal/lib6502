@@ -8,7 +8,7 @@
 #include "instructions.h"
 #include "operand.h"
 
-typedef int (*exec_fn)(cpu6502* cpu, Operand op);
+typedef int (*exec_fn)(CPU6502* cpu, Operand op);
 typedef struct {
   Inst instruction;
   AddrMode addr_mode;

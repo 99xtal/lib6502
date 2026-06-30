@@ -7,7 +7,7 @@
 #include "stack.h"
 #include "vectors.h"
 
-int and(cpu6502* cpu, Operand op) {
+int and(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->A &= value;
 
@@ -17,7 +17,7 @@ int and(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int eor(cpu6502* cpu, Operand op) {
+int eor(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->A ^= value;
 
@@ -27,7 +27,7 @@ int eor(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int ora(cpu6502* cpu, Operand op) {
+int ora(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->A |= value;
 
@@ -37,7 +37,7 @@ int ora(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int bit(cpu6502* cpu, Operand op) {
+int bit(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   set_flag(cpu, FLAG_ZERO, (cpu->A & value) == 0);
@@ -47,7 +47,7 @@ int bit(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int brk(cpu6502* cpu, Operand op __attribute__((unused))) {
+int brk(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->PC++;
 
   stack_push_u16(cpu, cpu->PC);
@@ -64,7 +64,7 @@ int brk(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int rti(cpu6502* cpu, Operand op) {
+int rti(CPU6502* cpu, Operand op) {
   (void)op;
 
   cpu->status = stack_pop_u8(cpu);
@@ -82,56 +82,56 @@ int rti(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int clc(cpu6502* cpu __attribute__((unused)),
+int clc(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_CARRY, 0);
 
   return 0;
 }
 
-int cld(cpu6502* cpu __attribute__((unused)),
+int cld(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_DECIMAL_MODE, 0);
 
   return 0;
 }
 
-int cli(cpu6502* cpu __attribute__((unused)),
+int cli(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_INTERRUPT_DISABLE, 0);
 
   return 0;
 }
 
-int clv(cpu6502* cpu __attribute__((unused)),
+int clv(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_OVERFLOW, 0);
 
   return 0;
 }
 
-int sec(cpu6502* cpu __attribute__((unused)),
+int sec(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_CARRY, 1);
 
   return 0;
 }
 
-int sed(cpu6502* cpu __attribute__((unused)),
+int sed(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_DECIMAL_MODE, 1);
 
   return 0;
 }
 
-int sei(cpu6502* cpu __attribute__((unused)),
+int sei(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
 
   return 0;
 }
 
-int lda(cpu6502* cpu, Operand op) {
+int lda(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->A = value;
 
@@ -141,7 +141,7 @@ int lda(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int ldx(cpu6502* cpu, Operand op) {
+int ldx(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->X = value;
 
@@ -151,7 +151,7 @@ int ldx(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int ldy(cpu6502* cpu, Operand op) {
+int ldy(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->Y = value;
 
@@ -161,25 +161,25 @@ int ldy(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int sta(cpu6502* cpu, Operand op) {
+int sta(CPU6502* cpu, Operand op) {
   cpu->write(cpu->ctx, op.addr, cpu->A);
 
   return 0;
 }
 
-int stx(cpu6502* cpu, Operand op) {
+int stx(CPU6502* cpu, Operand op) {
   cpu->write(cpu->ctx, op.addr, cpu->X);
 
   return 0;
 }
 
-int sty(cpu6502* cpu, Operand op) {
+int sty(CPU6502* cpu, Operand op) {
   cpu->write(cpu->ctx, op.addr, cpu->Y);
 
   return 0;
 }
 
-int tax(cpu6502* cpu, Operand op __attribute__((unused))) {
+int tax(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->X = cpu->A;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
@@ -188,7 +188,7 @@ int tax(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int tay(cpu6502* cpu, Operand op __attribute__((unused))) {
+int tay(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->Y = cpu->A;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->Y & 0x80) != 0);
@@ -197,7 +197,7 @@ int tay(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int txa(cpu6502* cpu, Operand op __attribute__((unused))) {
+int txa(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->A = cpu->X;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
@@ -206,7 +206,7 @@ int txa(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int tya(cpu6502* cpu, Operand op __attribute__((unused))) {
+int tya(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->A = cpu->Y;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
@@ -215,12 +215,12 @@ int tya(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int nop(cpu6502* cpu __attribute__((unused)),
+int nop(CPU6502* cpu __attribute__((unused)),
         Operand op __attribute__((unused))) {
   return 0;
 }
 
-int tsx(cpu6502* cpu, Operand op __attribute__((unused))) {
+int tsx(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->X = cpu->SP;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
@@ -229,19 +229,19 @@ int tsx(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int txs(cpu6502* cpu, Operand op __attribute__((unused))) {
+int txs(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->SP = cpu->X;
 
   return 0;
 }
 
-int pha(cpu6502* cpu, Operand op __attribute__((unused))) {
+int pha(CPU6502* cpu, Operand op __attribute__((unused))) {
   stack_push_u8(cpu, cpu->A);
 
   return 0;
 }
 
-int php(cpu6502* cpu, Operand op __attribute__((unused))) {
+int php(CPU6502* cpu, Operand op __attribute__((unused))) {
   uint8_t status = cpu->status;
   status |= FLAG_BREAK;
   status |= FLAG_UNUSED;  // bit 5 is usually always pushed as 1
@@ -251,7 +251,7 @@ int php(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int pla(cpu6502* cpu, Operand op __attribute__((unused))) {
+int pla(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->A = stack_pop_u8(cpu);
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
@@ -260,13 +260,13 @@ int pla(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int plp(cpu6502* cpu, Operand op __attribute__((unused))) {
+int plp(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->status = stack_pop_u8(cpu);
 
   return 0;
 }
 
-void execute_adc(cpu6502* cpu, uint8_t value) {
+void execute_adc(CPU6502* cpu, uint8_t value) {
   uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
 
   if (get_flag(cpu, FLAG_DECIMAL_MODE)) {
@@ -305,7 +305,7 @@ void execute_adc(cpu6502* cpu, uint8_t value) {
   }
 }
 
-int adc(cpu6502* cpu, Operand op) {
+int adc(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   execute_adc(cpu, value);
@@ -313,7 +313,7 @@ int adc(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-void execute_sbc(cpu6502* cpu, uint8_t value) {
+void execute_sbc(CPU6502* cpu, uint8_t value) {
   uint8_t carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
   uint8_t old_a = cpu->A;
 
@@ -345,14 +345,14 @@ void execute_sbc(cpu6502* cpu, uint8_t value) {
   }
 }
 
-int sbc(cpu6502* cpu, Operand op) {
+int sbc(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   execute_sbc(cpu, value);
 
   return 0;
 }
-int cmp(cpu6502* cpu, Operand op) {
+int cmp(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t result = (uint16_t)cpu->A - value;
 
@@ -363,7 +363,7 @@ int cmp(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int cpx(cpu6502* cpu, Operand op) {
+int cpx(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t result = (uint16_t)cpu->X - value;
 
@@ -374,7 +374,7 @@ int cpx(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int cpy(cpu6502* cpu, Operand op) {
+int cpy(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t result = (uint16_t)cpu->Y - value;
 
@@ -385,13 +385,13 @@ int cpy(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int jmp(cpu6502* cpu, Operand op) {
+int jmp(CPU6502* cpu, Operand op) {
   cpu->PC = op.addr;
 
   return 0;
 }
 
-int jsr(cpu6502* cpu, Operand op) {
+int jsr(CPU6502* cpu, Operand op) {
   uint16_t return_addr = cpu->PC - 1;
   stack_push_u16(cpu, return_addr);
 
@@ -400,14 +400,14 @@ int jsr(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int rts(cpu6502* cpu, Operand op __attribute__((unused))) {
+int rts(CPU6502* cpu, Operand op __attribute__((unused))) {
   uint16_t return_addr = stack_pop_u16(cpu) + 1;
   cpu->PC = return_addr;
 
   return 0;
 }
 
-int inc(cpu6502* cpu, Operand op) {
+int inc(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t result = value + 1;
   cpu->write(cpu->ctx, op.addr, result);
@@ -418,7 +418,7 @@ int inc(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int inx(cpu6502* cpu, Operand op __attribute__((unused))) {
+int inx(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->X++;
 
   set_flag(cpu, FLAG_ZERO, cpu->X == 0);
@@ -427,7 +427,7 @@ int inx(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int iny(cpu6502* cpu, Operand op __attribute__((unused))) {
+int iny(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->Y++;
 
   set_flag(cpu, FLAG_ZERO, cpu->Y == 0);
@@ -436,7 +436,7 @@ int iny(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int dec(cpu6502* cpu, Operand op) {
+int dec(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t result = value - 1;
   cpu->write(cpu->ctx, op.addr, result);
@@ -447,7 +447,7 @@ int dec(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int dex(cpu6502* cpu, Operand op __attribute__((unused))) {
+int dex(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->X--;
 
   set_flag(cpu, FLAG_ZERO, cpu->X == 0);
@@ -456,7 +456,7 @@ int dex(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int dey(cpu6502* cpu, Operand op __attribute__((unused))) {
+int dey(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->Y--;
 
   set_flag(cpu, FLAG_ZERO, cpu->Y == 0);
@@ -465,7 +465,7 @@ int dey(cpu6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int branch(cpu6502* cpu, Operand op, int condition) {
+int branch(CPU6502* cpu, Operand op, int condition) {
   uint8_t raw = cpu->read(cpu->ctx, op.addr);
   int8_t offset = (int8_t)raw;
 
@@ -484,39 +484,39 @@ int branch(cpu6502* cpu, Operand op, int condition) {
   return 1;
 }
 
-int bcc(cpu6502* cpu, Operand op) {
+int bcc(CPU6502* cpu, Operand op) {
   return branch(cpu, op, !get_flag(cpu, FLAG_CARRY));
 }
 
-int bcs(cpu6502* cpu, Operand op) {
+int bcs(CPU6502* cpu, Operand op) {
   return branch(cpu, op, get_flag(cpu, FLAG_CARRY));
 }
 
-int beq(cpu6502* cpu, Operand op) {
+int beq(CPU6502* cpu, Operand op) {
   return branch(cpu, op, get_flag(cpu, FLAG_ZERO));
 }
 
-int bmi(cpu6502* cpu, Operand op) {
+int bmi(CPU6502* cpu, Operand op) {
   return branch(cpu, op, get_flag(cpu, FLAG_NEGATIVE));
 }
 
-int bne(cpu6502* cpu, Operand op) {
+int bne(CPU6502* cpu, Operand op) {
   return branch(cpu, op, !get_flag(cpu, FLAG_ZERO));
 }
 
-int bpl(cpu6502* cpu, Operand op) {
+int bpl(CPU6502* cpu, Operand op) {
   return branch(cpu, op, !get_flag(cpu, FLAG_NEGATIVE));
 }
 
-int bvc(cpu6502* cpu, Operand op) {
+int bvc(CPU6502* cpu, Operand op) {
   return branch(cpu, op, !get_flag(cpu, FLAG_OVERFLOW));
 }
 
-int bvs(cpu6502* cpu, Operand op) {
+int bvs(CPU6502* cpu, Operand op) {
   return branch(cpu, op, get_flag(cpu, FLAG_OVERFLOW));
 }
 
-int asl(cpu6502* cpu, Operand op) {
+int asl(CPU6502* cpu, Operand op) {
   uint8_t value =
       op.type == OPERAND_MEMORY ? cpu->read(cpu->ctx, op.addr) : cpu->A;
 
@@ -536,7 +536,7 @@ int asl(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int lsr(cpu6502* cpu, Operand op) {
+int lsr(CPU6502* cpu, Operand op) {
   uint8_t value =
       op.type == OPERAND_MEMORY ? cpu->read(cpu->ctx, op.addr) : cpu->A;
 
@@ -556,7 +556,7 @@ int lsr(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int rol(cpu6502* cpu, Operand op) {
+int rol(CPU6502* cpu, Operand op) {
   uint8_t value =
       op.type == OPERAND_MEMORY ? cpu->read(cpu->ctx, op.addr) : cpu->A;
 
@@ -579,7 +579,7 @@ int rol(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int ror(cpu6502* cpu, Operand op) {
+int ror(CPU6502* cpu, Operand op) {
   uint8_t value =
       op.type == OPERAND_MEMORY ? cpu->read(cpu->ctx, op.addr) : cpu->A;
 
@@ -602,12 +602,12 @@ int ror(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int kil(cpu6502* cpu, Operand op __attribute__((unused))) {
+int kil(CPU6502* cpu, Operand op __attribute__((unused))) {
   cpu->jammed = true;
   return 0;
 }
 
-int slo(cpu6502* cpu, Operand op) {
+int slo(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   set_flag(cpu, FLAG_CARRY, value & 0x80);
@@ -623,7 +623,7 @@ int slo(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int anc(cpu6502* cpu, Operand op) {
+int anc(CPU6502* cpu, Operand op) {
   // AND operation
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->A &= value;
@@ -638,7 +638,7 @@ int anc(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int rla(cpu6502* cpu, Operand op) {
+int rla(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   uint8_t old_carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
@@ -660,7 +660,7 @@ int rla(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int sre(cpu6502* cpu, Operand op) {
+int sre(CPU6502* cpu, Operand op) {
   // LSR
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
@@ -680,7 +680,7 @@ int sre(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int alr(cpu6502* cpu, Operand op) {
+int alr(CPU6502* cpu, Operand op) {
   // AND
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   cpu->A &= value;
@@ -698,7 +698,7 @@ int alr(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int rra(cpu6502* cpu, Operand op) {
+int rra(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   uint8_t result = value >> 1;
@@ -713,7 +713,7 @@ int rra(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int arr(cpu6502* cpu, Operand op) {
+int arr(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   cpu->A &= value;
@@ -731,7 +731,7 @@ int arr(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int sax(cpu6502* cpu, Operand op) {
+int sax(CPU6502* cpu, Operand op) {
   uint8_t result = cpu->A & cpu->X;
 
   cpu->write(cpu->ctx, op.addr, result);
@@ -739,7 +739,7 @@ int sax(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int xaa(cpu6502* cpu, Operand op) {
+int xaa(CPU6502* cpu, Operand op) {
   cpu->A = cpu->X;
 
   uint8_t value = cpu->read(cpu->ctx, op.addr);
@@ -751,7 +751,7 @@ int xaa(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int ahx(cpu6502* cpu, Operand op) {
+int ahx(CPU6502* cpu, Operand op) {
   uint8_t high = (uint8_t)((op.addr + 1) >> 8);
   uint8_t result = cpu->A & cpu->X & high;
 
@@ -760,7 +760,7 @@ int ahx(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int tas(cpu6502* cpu, Operand op) {
+int tas(CPU6502* cpu, Operand op) {
   cpu->SP = cpu->A & cpu->X;
   uint8_t high = (uint8_t)((op.addr + 1) >> 8);
 
@@ -769,7 +769,7 @@ int tas(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int shy(cpu6502* cpu, Operand op) {
+int shy(CPU6502* cpu, Operand op) {
   uint8_t high = (uint8_t)((op.addr + 1) >> 8);
 
   cpu->write(cpu->ctx, op.addr, cpu->Y & high);
@@ -777,7 +777,7 @@ int shy(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int shx(cpu6502* cpu, Operand op) {
+int shx(CPU6502* cpu, Operand op) {
   uint8_t high = (uint8_t)((op.addr + 1) >> 8);
 
   cpu->write(cpu->ctx, op.addr, cpu->X & high);
@@ -785,7 +785,7 @@ int shx(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int lax(cpu6502* cpu, Operand op) {
+int lax(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
 
   cpu->A = value;
@@ -794,7 +794,7 @@ int lax(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int las(cpu6502* cpu, Operand op) {
+int las(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr) & cpu->SP;
 
   cpu->A = value;
@@ -804,7 +804,7 @@ int las(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int dcp(cpu6502* cpu, Operand op) {
+int dcp(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t dec_result = value - 1;
   cpu->write(cpu->ctx, op.addr, dec_result);
@@ -818,13 +818,13 @@ int dcp(cpu6502* cpu, Operand op) {
   return 0;
 }
 
-int axs(cpu6502* cpu, Operand op) {
+int axs(CPU6502* cpu, Operand op) {
   cpu->write(cpu->ctx, op.addr, cpu->A & cpu->X);
 
   return 0;
 }
 
-int isc(cpu6502* cpu, Operand op) {
+int isc(CPU6502* cpu, Operand op) {
   uint8_t value = cpu->read(cpu->ctx, op.addr);
   uint8_t result = value + 1;
   cpu->write(cpu->ctx, op.addr, result);

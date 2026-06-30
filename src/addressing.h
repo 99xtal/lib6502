@@ -5,7 +5,7 @@
 
 #include "operand.h"
 
-typedef Operand (*addr_fn)(cpu6502* cpu);
+typedef Operand (*addr_fn)(CPU6502* cpu);
 
 typedef enum {
   ADDR_IMM,

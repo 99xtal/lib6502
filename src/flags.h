@@ -15,8 +15,8 @@ typedef enum {
   FLAG_NEGATIVE = 1 << 7,
 } StatusFlag;
 
-void set_flag(cpu6502* cpu, StatusFlag flag, uint8_t value);
+void set_flag(CPU6502* cpu, StatusFlag flag, uint8_t value);
 
-uint8_t get_flag(cpu6502* cpu, StatusFlag flag);
+uint8_t get_flag(CPU6502* cpu, StatusFlag flag);
 
 #endif  // FLAGS_H

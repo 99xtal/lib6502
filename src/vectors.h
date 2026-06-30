@@ -10,6 +10,6 @@ typedef enum {
   VECTOR_IRQ = 0xFFFE,    // Address of the low byte of the IRQ/BRK vector
 } Vectors;
 
-uint16_t read_vector(cpu6502* cpu, uint16_t vector_address);
+uint16_t read_vector(CPU6502* cpu, uint16_t vector_address);
 
 #endif  // VECTORS_H

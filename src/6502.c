@@ -9,8 +9,8 @@
 #include "trace.h"
 #include "vectors.h"
 
-void cpu6502_init(cpu6502* cpu, cpu6502_variant variant, cpu6502_read_fn read,
-                  cpu6502_write_fn write, void* ctx) {
+void cpu6502_init(CPU6502* cpu, CPU6502Variant variant, CPU6502ReadFn read,
+                  CPU6502WriteFn write, void* ctx) {
   cpu->A = 0;
   cpu->X = 0;
   cpu->Y = 0;
@@ -23,7 +23,7 @@ void cpu6502_init(cpu6502* cpu, cpu6502_variant variant, cpu6502_read_fn read,
   cpu->ctx = ctx;
 }
 
-int cpu6502_reset(cpu6502* cpu) {
+int cpu6502_reset(CPU6502* cpu) {
   int clock_cycles = 7;
   uint16_t reset_position = read_vector(cpu, VECTOR_RESET);
 
@@ -33,7 +33,7 @@ int cpu6502_reset(cpu6502* cpu) {
   return clock_cycles;
 }
 
-int cpu6502_step(cpu6502* cpu) {
+int cpu6502_step(CPU6502* cpu) {
   if (cpu->jammed) {
     return 1;  // burn a cycle
   }
@@ -58,7 +58,7 @@ int cpu6502_step(cpu6502* cpu) {
   Instruction instruction = instructions[opcode.instruction];
 
   // build trace
-  cpu6502_trace t = {0};
+  CPU6502Trace t = {0};
   uint8_t bytes[3];
   if (cpu->trace) {
     build_trace(&t, &cpu, initial_pc, &addressing_mode, &instruction);
@@ -83,7 +83,7 @@ int cpu6502_step(cpu6502* cpu) {
   return cycles;
 }
 
-int cpu6502_nmi(cpu6502* cpu) {
+int cpu6502_nmi(CPU6502* cpu) {
   stack_push_u16(cpu, cpu->PC);
   stack_push_u8(cpu, (cpu->status & ~FLAG_BREAK) | FLAG_UNUSED);
 
