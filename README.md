@@ -137,7 +137,7 @@ void write(void *ctx, uint16_t addr, uint8_t value) {
 int main(void) {
     uint8_t memory[0x10000] = {0};
 
-    cpu6502 cpu;
+    CPU6502 cpu;
 
     cpu6502_init(&cpu,
                  CPU6502_VARIANT_NMOS,
