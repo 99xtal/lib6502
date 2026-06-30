@@ -24,6 +24,7 @@ typedef enum {
 } AddrMode;
 
 typedef struct {
+  AddrMode type;
   addr_fn address;
   uint8_t bytes;
   const char* format;

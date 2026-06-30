@@ -8,20 +8,40 @@
 typedef enum {
   // documented instructions only
   CPU6502_VARIANT_STRICT,
-  // documented and undocumented instructions
+  // documented and undocumented instructions of the original MOS 6502
   CPU6502_VARIANT_NMOS,
+  // variant produced by Ricoh for the NES (NTSC version)
+  CPU6502_VARIANT_RP2A03,
 } CPU6502Variant;
 
 typedef struct CPU6502Trace {
   uint16_t PC;
   uint8_t bytes[3];
   size_t bytes_count;
+  bool is_undocumented_inst;
   const char* mnemonic;
   char operand[25];
   uint8_t SP;
   uint8_t A;
   uint8_t X;
   uint8_t Y;
+
+  /**
+   * Status Register (P)
+   *
+   * 7  bit  0
+   * ---- ----
+   * NV1B DIZC
+   * |||| ||||
+   * |||| |||+- Carry
+   * |||| ||+-- Zero
+   * |||| |+--- Interrupt Disable
+   * |||| +---- Decimal
+   * |||+------ (No CPU effect; see: the B flag)
+   * ||+------- (No CPU effect; always pushed as 1)
+   * |+-------- Overflow
+   * +--------- Negative
+   */
   uint8_t status;
   uint8_t cycles;
 } CPU6502Trace;

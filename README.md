@@ -6,12 +6,34 @@ A lightweight MOS 6502 CPU emulation library written in C.
 
 ## Features
 
-* Complete implementation of official MOS 6502 instructions
+* Complete implementation of all official MOS 6502 instructions
+* Support for multiple CPU variants
+* Optional undocumented NMOS opcodes
 * Decimal mode (BCD) arithmetic support
 * User-defined memory bus via read/write callbacks
 * Instruction stepping with cycle counts
 * Optional instruction tracing support
 * Passes the Klaus Dormann 6502 functional test suite
+
+## CPU Variants
+
+`lib6502` supports multiple compatible 6502-family CPUs.
+
+| Variant                  | Description                                                                                                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CPU6502_VARIANT_STRICT` | Implements only the documented MOS 6502 instruction set. Illegal/undocumented opcodes are treated as invalid instructions.                                                                   |
+| `CPU6502_VARIANT_NMOS`   | Emulates the original NMOS MOS 6502, including undocumented opcodes and original hardware behavior.                                                                                          |
+| `CPU6502_VARIANT_RP2A03` | Emulates the Ricoh RP2A03 CPU used in the NTSC Nintendo Entertainment System. This variant includes the NMOS undocumented opcodes but disables decimal mode, matching the original hardware. |
+
+The desired variant is selected when initializing the CPU:
+
+```c
+cpu6502_init(&cpu,
+             CPU6502_VARIANT_RP2A03,
+             memory,
+             read,
+             write);
+```
 
 ## Requirements
 
@@ -117,7 +139,12 @@ int main(void) {
 
     cpu6502 cpu;
 
-    cpu6502_init(&cpu, memory, read, write);
+    cpu6502_init(&cpu,
+                 CPU6502_VARIANT_NMOS,
+                 memory,
+                 read,
+                 write);
+
     cpu6502_reset(&cpu);
 
     while (1) {
@@ -128,7 +155,7 @@ int main(void) {
 
 ## Design
 
-`lib6502` emulates only the CPU. It does not implement RAM, ROM, graphics, audio, timers, interrupts sources, or peripherals.
+`lib6502` emulates only the CPU. It does not implement RAM, ROM, graphics, audio, interrupt sources, timers, or peripheral devices.
 
 A complete system emulator should provide a bus implementation that maps memory accesses to the appropriate hardware components.
 
@@ -137,6 +164,8 @@ Typical uses include:
 * NES emulators
 * Commodore 64 emulators
 * Apple II emulators
+* Atari 8-bit emulators
+* BBC Micro emulators
 * Custom 6502-based systems
 * Educational projects and tooling
 

@@ -30,6 +30,8 @@ int cpu6502_reset(CPU6502* cpu) {
   cpu->SP = 0xFD;  // Reset stack pointer to 0x01FD
   cpu->PC = reset_position;
 
+  set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
+
   return clock_cycles;
 }
 
@@ -42,6 +44,7 @@ int cpu6502_step(CPU6502* cpu) {
   const Opcode* opcode_table;
   switch (cpu->variant) {
     case CPU6502_VARIANT_NMOS:
+    case CPU6502_VARIANT_RP2A03:
       opcode_table = opcode_table_nmos;
       break;
     case CPU6502_VARIANT_STRICT:
@@ -57,15 +60,15 @@ int cpu6502_step(CPU6502* cpu) {
   AddressingMode addressing_mode = addr_modes[opcode.addr_mode];
   Instruction instruction = instructions[opcode.instruction];
 
+  Operand op = addressing_mode.address(cpu);
+
   // build trace
   CPU6502Trace t = {0};
-  uint8_t bytes[3];
   if (cpu->trace) {
-    build_trace(&t, &cpu, initial_pc, &addressing_mode, &instruction);
+    build_trace(&t, cpu, initial_pc, &addressing_mode, &op, &instruction);
   }
 
   // execute instruction
-  Operand op = addressing_mode.address(cpu);
   int extra_cycles = instruction.execute(cpu, op);
 
   int cycles = opcode.cycles + extra_cycles;

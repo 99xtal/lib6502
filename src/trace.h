@@ -5,8 +5,10 @@
 
 #include "addressing.h"
 #include "instructions.h"
+#include "operand.h"
 
 void build_trace(CPU6502Trace* t, CPU6502* cpu, uint16_t initial_pc,
-                 AddressingMode* addr_mode, Instruction* instruction);
+                 AddressingMode* addr_mode, Operand* op,
+                 Instruction* instruction);
 
 #endif
