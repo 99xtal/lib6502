@@ -32,7 +32,7 @@ int cpu6502_reset(CPU6502* cpu) {
   int clock_cycles = 7;
   uint16_t reset_position = read_vector(cpu, VECTOR_RESET);
 
-  cpu->SP = 0xFD;  // Reset stack pointer to 0x01FD
+  cpu->SP = cpu->SP - 3;
   cpu->PC = reset_position;
 
   set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
