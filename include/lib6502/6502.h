@@ -79,4 +79,14 @@ int cpu6502_step(CPU6502* cpu);
 
 int cpu6502_nmi(CPU6502* cpu);
 
+typedef struct CPU6502DisasmLine {
+  uint16_t addr;
+  uint8_t bytes[3];
+  size_t bytes_count;
+  const char* mnemonic;
+  char operand[25];
+} CPU6502DisasmLine;
+
+bool cpu6502_disasm_at(CPU6502* cpu, uint16_t addr, CPU6502DisasmLine* out);
+
 #endif  // LIB6502_6502_H
