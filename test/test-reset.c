@@ -19,7 +19,7 @@ static void bus_write(void* ctx, uint16_t address, uint8_t value) {
 int main(void) {
   struct test_bus bus = {0};
   CPU6502* cpu =
-      cpu6502_create(CPU6502_VARIANT_STRICT, bus_read, bus_write, &bus);
+      cpu6502_create(CPU6502_VARIANT_NMOS, bus_read, bus_write, &bus);
 
   bus.mem[0xFFFC] = 0x34;
   bus.mem[0xFFFD] = 0x12;

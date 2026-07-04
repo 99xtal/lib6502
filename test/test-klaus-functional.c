@@ -23,7 +23,7 @@ int main(void) {
   }
 
   CPU6502* cpu =
-      cpu6502_create(CPU6502_VARIANT_STRICT, test_read, test_write, &machine);
+      cpu6502_create(CPU6502_VARIANT_NMOS, test_read, test_write, &machine);
   cpu6502_reset(cpu);
 
   cpu6502_set_pc(cpu, START_ADDR);

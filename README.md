@@ -21,7 +21,6 @@ A lightweight MOS 6502 CPU emulation library written in C.
 
 | Variant                  | Description                                                                                                                                                                                  |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CPU6502_VARIANT_STRICT` | Implements only the documented MOS 6502 instruction set. Illegal/undocumented opcodes are treated as invalid instructions.                                                                   |
 | `CPU6502_VARIANT_NMOS`   | Emulates the original NMOS MOS 6502, including undocumented opcodes and original hardware behavior.                                                                                          |
 | `CPU6502_VARIANT_RP2A03` | Emulates the Ricoh RP2A03 CPU used in the NTSC Nintendo Entertainment System. This variant includes the NMOS undocumented opcodes but disables decimal mode, matching the original hardware. |
 

@@ -6,8 +6,6 @@
 #include <stdlib.h>
 
 typedef enum {
-  // documented instructions only
-  CPU6502_VARIANT_STRICT,
   // documented and undocumented instructions of the original MOS 6502
   CPU6502_VARIANT_NMOS,
   // variant produced by Ricoh for the NES (NTSC version)

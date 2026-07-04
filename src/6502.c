@@ -11,8 +11,6 @@
 #include "stack.h"
 #include "vectors.h"
 
-const Opcode* get_opcode_table(CPU6502Variant variant);
-
 int cpu6502_init(CPU6502* cpu, CPU6502Variant variant, CPU6502ReadFn read,
                  CPU6502WriteFn write, void* ctx) {
   if (!cpu) {
@@ -64,11 +62,9 @@ int cpu6502_step(CPU6502* cpu) {
     return 1;  // burn a cycle
   }
 
-  const Opcode* opcode_table = get_opcode_table(cpu->variant);
-
   // read opcode
   uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC++);
-  Opcode opcode = opcode_table[opcode_byte];
+  Opcode opcode = opcode_table_nmos[opcode_byte];
   AddressingMode addressing_mode = addr_modes[opcode.addr_mode];
   Instruction instruction = instructions[opcode.instruction];
 
@@ -117,15 +113,4 @@ int cpu6502_set_pc(CPU6502* cpu, uint16_t addr) {
 
   cpu->PC = addr;
   return 0;
-}
-
-const Opcode* get_opcode_table(CPU6502Variant variant) {
-  switch (variant) {
-    case CPU6502_VARIANT_NMOS:
-    case CPU6502_VARIANT_RP2A03:
-      return opcode_table_nmos;
-    case CPU6502_VARIANT_STRICT:
-    default:
-      return opcode_table_strict;
-  }
 }
