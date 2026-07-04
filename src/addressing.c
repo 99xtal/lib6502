@@ -92,7 +92,8 @@ Operand addr_zero_page_y(CPU6502* cpu) {
   return (Operand){.type = OPERAND_MEMORY, .addr = addr, .page_crossed = 0};
 }
 
-Operand addr_implied(CPU6502* cpu __attribute__((unused))) {
+Operand addr_implied(CPU6502* cpu) {
+  (void)cpu;
   return (Operand){.type = OPERAND_MEMORY, .addr = 0, .page_crossed = 0};
 }
 
@@ -135,7 +136,7 @@ Operand addr_rel(CPU6502* cpu) {
   };
 }
 
-Operand addr_acc(CPU6502* cpu __attribute__((unused))) {
+Operand addr_acc(CPU6502* cpu) {
   return (Operand){
       .type = OPERAND_ACCUMULATOR,
       .addr = 0,
