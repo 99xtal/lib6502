@@ -1,7 +1,6 @@
 #include "addressing.h"
 
-#include <lib6502/6502.h>
-
+#include "6502.h"
 #include "opcodes.h"
 
 Operand addr_imm(CPU6502* cpu) {

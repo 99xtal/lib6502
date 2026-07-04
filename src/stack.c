@@ -1,4 +1,4 @@
-#include <lib6502/6502.h>
+#include "6502.h"
 
 void stack_push_u8(CPU6502* cpu, uint8_t value) {
   cpu->write(cpu->ctx, 0x0100 | cpu->SP, value);

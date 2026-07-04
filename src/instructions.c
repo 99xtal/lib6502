@@ -1,7 +1,6 @@
 #include "instructions.h"
 
-#include <lib6502/6502.h>
-
+#include "6502.h"
 #include "flags.h"
 #include "opcodes.h"
 #include "stack.h"

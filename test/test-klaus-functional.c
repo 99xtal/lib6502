@@ -22,33 +22,36 @@ int main(void) {
     return 1;
   }
 
-  CPU6502 cpu;
-  cpu6502_init(&cpu, CPU6502_VARIANT_STRICT, test_read, test_write, &machine);
-  cpu6502_reset(&cpu);
+  CPU6502* cpu =
+      cpu6502_create(CPU6502_VARIANT_STRICT, test_read, test_write, &machine);
+  cpu6502_reset(cpu);
 
-  cpu.PC = START_ADDR;
+  cpu6502_set_pc(cpu, START_ADDR);
 
   for (uint64_t step = 0; step < MAX_STEPS; step++) {
-    if (cpu.PC == SUCCESS_PC) {
-      printf("PASS: Klaus test reached success PC $%04X\n", cpu.PC);
+    CPU6502State state = cpu6502_get_state(cpu);
+
+    if (state.PC == SUCCESS_PC) {
+      printf("PASS: Klaus test reached success PC $%04X\n", state.PC);
       return 0;
     }
 
-    uint16_t old_pc = cpu.PC;
+    uint16_t old_pc = state.PC;
 
-    int cycles = cpu6502_step(&cpu);
+    int cycles = cpu6502_step(cpu);
     if (cycles < 0) {
-      fprintf(stderr, "CPU error at PC=$%04X\n", cpu.PC);
+      fprintf(stderr, "CPU error at PC=$%04X\n", state.PC);
       return 1;
     }
 
     // Klaus failure traps often loop forever at a failing PC.
-    if (cpu.PC == old_pc && cpu.PC != SUCCESS_PC) {
-      fprintf(stderr, "FAIL: stuck at PC=$%04X\n", cpu.PC);
+    if (state.PC == old_pc && state.PC != SUCCESS_PC) {
+      fprintf(stderr, "FAIL: stuck at PC=$%04X\n", state.PC);
       return 1;
     }
   }
 
-  fprintf(stderr, "FAIL: exceeded max steps, PC=$%04X\n", cpu.PC);
+  CPU6502State state = cpu6502_get_state(cpu);
+  fprintf(stderr, "FAIL: exceeded max steps, PC=$%04X\n", state.PC);
   return 1;
 }

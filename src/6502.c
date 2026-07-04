@@ -1,3 +1,5 @@
+#include "6502.h"
+
 #include <lib6502/6502.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -10,21 +12,37 @@
 #include "vectors.h"
 
 const Opcode* get_opcode_table(CPU6502Variant variant);
-void format_disasm_operand(char* buf, size_t size, AddrMode mode,
-                           uint16_t instr_addr, const uint8_t bytes[3]);
 
-void cpu6502_init(CPU6502* cpu, CPU6502Variant variant, CPU6502ReadFn read,
-                  CPU6502WriteFn write, void* ctx) {
-  cpu->A = 0;
-  cpu->X = 0;
-  cpu->Y = 0;
-  cpu->SP = 0;
+int cpu6502_init(CPU6502* cpu, CPU6502Variant variant, CPU6502ReadFn read,
+                 CPU6502WriteFn write, void* ctx) {
+  if (!cpu) {
+    return -1;
+  }
+
+  memset(cpu, 0, sizeof(*cpu));
   cpu->status = 0 | FLAG_UNUSED;  // Set unused flag to 1
   cpu->variant = variant;
 
   cpu->read = read;
   cpu->write = write;
   cpu->ctx = ctx;
+
+  return 0;
+}
+
+CPU6502* cpu6502_create(CPU6502Variant variant, CPU6502ReadFn read,
+                        CPU6502WriteFn write, void* ctx) {
+  CPU6502* cpu = malloc(sizeof(*cpu));
+  if (!cpu) {
+    return NULL;
+  }
+
+  if (cpu6502_init(cpu, variant, read, write, ctx) != 0) {
+    free(cpu);
+    return NULL;
+  }
+
+  return cpu;
 }
 
 int cpu6502_reset(CPU6502* cpu) {
@@ -39,14 +57,14 @@ int cpu6502_reset(CPU6502* cpu) {
   return clock_cycles;
 }
 
+void cpu6502_tick(CPU6502* cpu) {}
+
 int cpu6502_step(CPU6502* cpu) {
   if (cpu->jammed) {
     return 1;  // burn a cycle
   }
 
   const Opcode* opcode_table = get_opcode_table(cpu->variant);
-
-  uint16_t initial_pc = cpu->PC;
 
   // read opcode
   uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC++);
@@ -79,6 +97,28 @@ int cpu6502_nmi(CPU6502* cpu) {
   return 7;
 }
 
+void cpu6502_destroy(CPU6502* cpu) { free(cpu); }
+
+CPU6502State cpu6502_get_state(CPU6502* cpu) {
+  return (CPU6502State){
+      .A = cpu->A,
+      .X = cpu->X,
+      .Y = cpu->Y,
+      .status = cpu->status,
+      .PC = cpu->PC,
+      .SP = cpu->SP,
+  };
+}
+
+int cpu6502_set_pc(CPU6502* cpu, uint16_t addr) {
+  if (!cpu) {
+    return -1;
+  }
+
+  cpu->PC = addr;
+  return 0;
+}
+
 const Opcode* get_opcode_table(CPU6502Variant variant) {
   switch (variant) {
     case CPU6502_VARIANT_NMOS:
@@ -87,100 +127,5 @@ const Opcode* get_opcode_table(CPU6502Variant variant) {
     case CPU6502_VARIANT_STRICT:
     default:
       return opcode_table_strict;
-  }
-}
-
-bool cpu6502_disasm_at(CPU6502* cpu, uint16_t addr, CPU6502DisasmLine* out) {
-  if (!cpu || !out) {
-    return false;
-  }
-
-  uint8_t opcode_byte = cpu->read(cpu->ctx, addr);
-
-  const Opcode* opcode_table = get_opcode_table(cpu->variant);
-  Opcode opcode = opcode_table[opcode_byte];
-  AddressingMode addressing_mode = addr_modes[opcode.addr_mode];
-  Instruction instruction = instructions[opcode.instruction];
-
-  out->addr = addr;
-  out->mnemonic = instruction.mnemonic;
-  out->bytes_count = addressing_mode.bytes + 1;
-
-  out->bytes[0] = opcode_byte;
-  for (uint8_t i = 0; i < addressing_mode.bytes; i++) {
-    out->bytes[i + 1] = cpu->read(cpu->ctx, addr + i + 1);
-  }
-
-  format_disasm_operand(out->operand, sizeof(out->operand),
-                        addressing_mode.type, addr, out->bytes);
-
-  return true;
-}
-
-void format_disasm_operand(char* buf, size_t size, AddrMode mode,
-                           uint16_t instr_addr, const uint8_t bytes[3]) {
-  uint8_t lo = bytes[1];
-  uint8_t hi = bytes[2];
-  uint16_t abs = (uint16_t)lo | ((uint16_t)hi << 8);
-
-  switch (mode) {
-    case ADDR_IMP:
-      snprintf(buf, size, "");
-      break;
-
-    case ADDR_ACC:
-      snprintf(buf, size, "A");
-      break;
-
-    case ADDR_IMM:
-      snprintf(buf, size, "#$%02X", lo);
-      break;
-
-    case ADDR_ZP:
-      snprintf(buf, size, "$%02X", lo);
-      break;
-
-    case ADDR_ZP_X:
-      snprintf(buf, size, "$%02X,X", lo);
-      break;
-
-    case ADDR_ZP_Y:
-      snprintf(buf, size, "$%02X,Y", lo);
-      break;
-
-    case ADDR_ABS:
-      snprintf(buf, size, "$%04X", abs);
-      break;
-
-    case ADDR_ABS_X:
-      snprintf(buf, size, "$%04X,X", abs);
-      break;
-
-    case ADDR_ABS_Y:
-      snprintf(buf, size, "$%04X,Y", abs);
-      break;
-
-    case ADDR_IND:
-      snprintf(buf, size, "($%04X)", abs);
-      break;
-
-    case ADDR_IND_X:
-      snprintf(buf, size, "($%02X,X)", lo);
-      break;
-
-    case ADDR_IND_Y:
-      snprintf(buf, size, "($%02X),Y", lo);
-      break;
-
-    case ADDR_REL: {
-      int8_t offset = (int8_t)lo;
-      uint16_t target = instr_addr + 2 + offset;
-      snprintf(buf, size, "$%04X", target);
-      break;
-    }
-
-    default:
-      snprintf(buf, size, "???");
-      break;
   }
 }

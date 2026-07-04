@@ -1,6 +1,6 @@
 #include "flags.h"
 
-#include <lib6502/6502.h>
+#include "6502.h"
 
 void set_flag(CPU6502* cpu, StatusFlag flag, uint8_t value) {
   if (value)
