@@ -20,7 +20,7 @@ typedef struct CPU6502 CPU6502;
 CPU6502* cpu6502_create(CPU6502Variant variant, CPU6502ReadFn read,
                         CPU6502WriteFn write, void* ctx);
 
-int cpu6502_reset(CPU6502* cpu);
+void cpu6502_reset(CPU6502* cpu);
 
 void cpu6502_tick(CPU6502* cpu);
 

@@ -4,12 +4,15 @@
 #include <lib6502/6502.h>
 #include <stdint.h>
 
-typedef enum {
-  OP_RESET,
-} OpType;
+typedef void (*MicroOpFn)(CPU6502* cpu);
+
+typedef struct OpDef {
+  const char* name;
+  MicroOpFn micro_ops[8];
+} OpDef;
 
 typedef struct OpState {
-  OpType type;
+  OpDef* def;
   uint8_t cycle;
   uint8_t addr_lo;
   uint8_t addr_hi;

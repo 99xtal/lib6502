@@ -45,53 +45,50 @@ CPU6502* cpu6502_create(CPU6502Variant variant, CPU6502ReadFn read,
 
 void finish_op(CPU6502* cpu) { memset(&cpu->op, 0, sizeof(cpu->op)); }
 
-int cpu6502_reset(CPU6502* cpu) { cpu->reset_requested = true; }
+void cpu6502_reset(CPU6502* cpu) { cpu->reset_requested = true; }
 
-void tick_reset(CPU6502* cpu) {
-  switch (cpu->op.cycle++) {
-    case 0:
-    case 1:
-      break;
-    case 2: {
-      cpu->SP--;
-      break;
-    }
-    case 3: {
-      cpu->SP--;
-      break;
-    }
-    case 4: {
-      cpu->SP--;
-      break;
-    }
-    case 5: {
-      cpu->op.addr_lo = cpu->read(cpu->ctx, 0xFFFC);
-      break;
-    }
-    case 6: {
-      cpu->op.addr_hi = cpu->read(cpu->ctx, 0xFFFD);
-      uint16_t addr = (cpu->op.addr_hi << 8) | cpu->op.addr_lo;
-      cpu->PC = addr;
-      cpu->status |= FLAG_INTERRUPT_DISABLE;
+void dummy(CPU6502* cpu) { (void)cpu; }
 
-      cpu->reset_requested = false;
-      finish_op(cpu);
-      break;
-    }
-  }
+void dec_sp(CPU6502* cpu) { cpu->SP--; }
+
+void read_reset_low(CPU6502* cpu) {
+  cpu->op.addr_lo = cpu->read(cpu->ctx, 0xFFFC);
 }
 
-void cpu6502_tick(CPU6502* cpu) {
-  if (cpu->reset_requested && cpu->op.cycle == 0) {
-    cpu->op.type = OP_RESET;
-  }
+void read_reset_high_finish(CPU6502* cpu) {
+  cpu->op.addr_hi = cpu->read(cpu->ctx, 0xFFFD);
+  uint16_t addr = (cpu->op.addr_hi << 8) | cpu->op.addr_lo;
+  cpu->PC = addr;
+  cpu->status |= FLAG_INTERRUPT_DISABLE;
 
-  switch (cpu->op.type) {
-    case OP_RESET: {
-      tick_reset(cpu);
-      break;
+  cpu->reset_requested = false;
+  finish_op(cpu);
+}
+
+OpDef reset_sequence = {.name = "RESET",
+                        .micro_ops = {
+                            dummy,
+                            dummy,
+                            dec_sp,
+                            dec_sp,
+                            dec_sp,
+                            read_reset_low,
+                            read_reset_high_finish,
+                        }};
+
+void cpu6502_tick(CPU6502* cpu) {
+  if (cpu->op.def == NULL) {
+    if (cpu->reset_requested) {
+      cpu->op.def = &reset_sequence;
+
+      cpu->reset_requested = false;
+    } else {
+      // instruction
     }
   }
+
+  MicroOpFn micro_op = cpu->op.def->micro_ops[cpu->op.cycle++];
+  micro_op(cpu);
 }
 
 int cpu6502_step(CPU6502* cpu) {
