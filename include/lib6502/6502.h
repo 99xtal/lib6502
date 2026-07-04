@@ -14,41 +14,8 @@ typedef enum {
   CPU6502_VARIANT_RP2A03,
 } CPU6502Variant;
 
-typedef struct CPU6502Trace {
-  uint16_t PC;
-  uint8_t bytes[3];
-  size_t bytes_count;
-  bool is_undocumented_inst;
-  const char* mnemonic;
-  char operand[25];
-  uint8_t SP;
-  uint8_t A;
-  uint8_t X;
-  uint8_t Y;
-
-  /**
-   * Status Register (P)
-   *
-   * 7  bit  0
-   * ---- ----
-   * NV1B DIZC
-   * |||| ||||
-   * |||| |||+- Carry
-   * |||| ||+-- Zero
-   * |||| |+--- Interrupt Disable
-   * |||| +---- Decimal
-   * |||+------ (No CPU effect; see: the B flag)
-   * ||+------- (No CPU effect; always pushed as 1)
-   * |+-------- Overflow
-   * +--------- Negative
-   */
-  uint8_t status;
-  uint8_t cycles;
-} CPU6502Trace;
-
 typedef uint8_t (*CPU6502ReadFn)(void* ctx, uint16_t address);
 typedef void (*CPU6502WriteFn)(void* ctx, uint16_t address, uint8_t value);
-typedef void (*CPU6502TraceFn)(void* trace_ctx, CPU6502Trace trace);
 
 typedef struct CPU6502 {
   CPU6502Variant variant;
@@ -64,10 +31,6 @@ typedef struct CPU6502 {
 
   // stops program execution, set by undocumented *KIL opcode
   bool jammed;
-
-  // Optional tracing
-  CPU6502TraceFn trace;
-  void* trace_ctx;
 } CPU6502;
 
 void cpu6502_init(CPU6502* cpu, CPU6502Variant variant, CPU6502ReadFn read,

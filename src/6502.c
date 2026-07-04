@@ -7,7 +7,6 @@
 #include "flags.h"
 #include "opcodes.h"
 #include "stack.h"
-#include "trace.h"
 #include "vectors.h"
 
 const Opcode* get_opcode_table(CPU6502Variant variant);
@@ -57,12 +56,6 @@ int cpu6502_step(CPU6502* cpu) {
 
   Operand op = addressing_mode.address(cpu);
 
-  // build trace
-  CPU6502Trace t = {0};
-  if (cpu->trace) {
-    build_trace(&t, cpu, initial_pc, &addressing_mode, &op, &instruction);
-  }
-
   // execute instruction
   int extra_cycles = instruction.execute(cpu, op);
 
@@ -70,12 +63,6 @@ int cpu6502_step(CPU6502* cpu) {
 
   if (op.page_crossed) {
     cycles += opcode.page_cross_penalty;
-  }
-
-  if (cpu->trace) {
-    t.cycles = cycles;
-
-    cpu->trace(cpu->trace_ctx, t);
   }
 
   return cycles;

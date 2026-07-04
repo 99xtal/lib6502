@@ -13,39 +13,18 @@
 #define SUCCESS_PC 0x3469
 
 #define MAX_STEPS 100000000
-#define ENABLE_TRACING 0
-
-void trace_console(void* trace_ctx, CPU6502Trace trace) {
-  char byte_str[10] = {0};
-  int pos = 0;
-
-  for (int i = 0; i < trace.bytes_count; i++) {
-    pos += snprintf(byte_str + pos, sizeof(byte_str) - pos, "%02X ",
-                    trace.bytes[i]);
-  }
-
-  printf("%04X  %-9s %-3s %-27s A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n",
-         trace.PC, byte_str, trace.mnemonic, trace.operand, trace.A, trace.X,
-         trace.Y, trace.status, trace.SP, trace.cycles);
-}
 
 int main(void) {
   TestMachine machine;
   memset(&machine, 0, sizeof(machine));
 
-  if (load_binary(&machine, "test/roms/klaus-functional.bin",
-                  LOAD_ADDR) != 0) {
+  if (load_binary(&machine, "test/roms/klaus-functional.bin", LOAD_ADDR) != 0) {
     return 1;
   }
 
   CPU6502 cpu;
   cpu6502_init(&cpu, CPU6502_VARIANT_STRICT, test_read, test_write, &machine);
   cpu6502_reset(&cpu);
-
-  if (ENABLE_TRACING != 0) {
-    cpu.trace = trace_console;
-    cpu.trace_ctx = NULL;
-  }
 
   cpu.PC = START_ADDR;
 
