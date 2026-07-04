@@ -47,7 +47,7 @@ int bit(CPU6502* cpu, Operand op) {
   return 0;
 }
 
-int brk(CPU6502* cpu, Operand op __attribute__((unused))) {
+int brk(CPU6502* cpu, Operand op) {
   cpu->PC++;
 
   stack_push_u16(cpu, cpu->PC);
@@ -82,50 +82,50 @@ int rti(CPU6502* cpu, Operand op) {
   return 0;
 }
 
-int clc(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int clc(CPU6502* cpu,
+        Operand op) {
   set_flag(cpu, FLAG_CARRY, 0);
 
   return 0;
 }
 
-int cld(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int cld(CPU6502* cpu,
+        Operand op) {
   set_flag(cpu, FLAG_DECIMAL_MODE, 0);
 
   return 0;
 }
 
-int cli(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int cli(CPU6502* cpu,
+        Operand op) {
   set_flag(cpu, FLAG_INTERRUPT_DISABLE, 0);
 
   return 0;
 }
 
-int clv(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int clv(CPU6502* cpu,
+        Operand op) {
   set_flag(cpu, FLAG_OVERFLOW, 0);
 
   return 0;
 }
 
-int sec(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int sec(CPU6502* cpu,
+        Operand op) {
   set_flag(cpu, FLAG_CARRY, 1);
 
   return 0;
 }
 
-int sed(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int sed(CPU6502* cpu,
+        Operand op) {
   set_flag(cpu, FLAG_DECIMAL_MODE, 1);
 
   return 0;
 }
 
-int sei(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int sei(CPU6502* cpu,
+        Operand op) {
   set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
 
   return 0;
@@ -179,7 +179,7 @@ int sty(CPU6502* cpu, Operand op) {
   return 0;
 }
 
-int tax(CPU6502* cpu, Operand op __attribute__((unused))) {
+int tax(CPU6502* cpu, Operand op) {
   cpu->X = cpu->A;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
@@ -188,7 +188,7 @@ int tax(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int tay(CPU6502* cpu, Operand op __attribute__((unused))) {
+int tay(CPU6502* cpu, Operand op) {
   cpu->Y = cpu->A;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->Y & 0x80) != 0);
@@ -197,7 +197,7 @@ int tay(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int txa(CPU6502* cpu, Operand op __attribute__((unused))) {
+int txa(CPU6502* cpu, Operand op) {
   cpu->A = cpu->X;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
@@ -206,7 +206,7 @@ int txa(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int tya(CPU6502* cpu, Operand op __attribute__((unused))) {
+int tya(CPU6502* cpu, Operand op) {
   cpu->A = cpu->Y;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
@@ -215,12 +215,12 @@ int tya(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int nop(CPU6502* cpu __attribute__((unused)),
-        Operand op __attribute__((unused))) {
+int nop(CPU6502* cpu,
+        Operand op) {
   return 0;
 }
 
-int tsx(CPU6502* cpu, Operand op __attribute__((unused))) {
+int tsx(CPU6502* cpu, Operand op) {
   cpu->X = cpu->SP;
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->X & 0x80) != 0);
@@ -229,19 +229,19 @@ int tsx(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int txs(CPU6502* cpu, Operand op __attribute__((unused))) {
+int txs(CPU6502* cpu, Operand op) {
   cpu->SP = cpu->X;
 
   return 0;
 }
 
-int pha(CPU6502* cpu, Operand op __attribute__((unused))) {
+int pha(CPU6502* cpu, Operand op) {
   stack_push_u8(cpu, cpu->A);
 
   return 0;
 }
 
-int php(CPU6502* cpu, Operand op __attribute__((unused))) {
+int php(CPU6502* cpu, Operand op) {
   uint8_t status = cpu->status;
   status |= FLAG_BREAK;
   status |= FLAG_UNUSED;  // bit 5 is usually always pushed as 1
@@ -251,7 +251,7 @@ int php(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int pla(CPU6502* cpu, Operand op __attribute__((unused))) {
+int pla(CPU6502* cpu, Operand op) {
   cpu->A = stack_pop_u8(cpu);
 
   set_flag(cpu, FLAG_NEGATIVE, (cpu->A & 0x80) != 0);
@@ -260,7 +260,7 @@ int pla(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int plp(CPU6502* cpu, Operand op __attribute__((unused))) {
+int plp(CPU6502* cpu, Operand op) {
   uint8_t status_value = stack_pop_u8(cpu);
 
   cpu->status = (status_value & ~FLAG_BREAK) | FLAG_UNUSED;
@@ -404,7 +404,7 @@ int jsr(CPU6502* cpu, Operand op) {
   return 0;
 }
 
-int rts(CPU6502* cpu, Operand op __attribute__((unused))) {
+int rts(CPU6502* cpu, Operand op) {
   uint16_t return_addr = stack_pop_u16(cpu) + 1;
   cpu->PC = return_addr;
 
@@ -422,7 +422,7 @@ int inc(CPU6502* cpu, Operand op) {
   return 0;
 }
 
-int inx(CPU6502* cpu, Operand op __attribute__((unused))) {
+int inx(CPU6502* cpu, Operand op) {
   cpu->X++;
 
   set_flag(cpu, FLAG_ZERO, cpu->X == 0);
@@ -431,7 +431,7 @@ int inx(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int iny(CPU6502* cpu, Operand op __attribute__((unused))) {
+int iny(CPU6502* cpu, Operand op) {
   cpu->Y++;
 
   set_flag(cpu, FLAG_ZERO, cpu->Y == 0);
@@ -451,7 +451,7 @@ int dec(CPU6502* cpu, Operand op) {
   return 0;
 }
 
-int dex(CPU6502* cpu, Operand op __attribute__((unused))) {
+int dex(CPU6502* cpu, Operand op) {
   cpu->X--;
 
   set_flag(cpu, FLAG_ZERO, cpu->X == 0);
@@ -460,7 +460,7 @@ int dex(CPU6502* cpu, Operand op __attribute__((unused))) {
   return 0;
 }
 
-int dey(CPU6502* cpu, Operand op __attribute__((unused))) {
+int dey(CPU6502* cpu, Operand op) {
   cpu->Y--;
 
   set_flag(cpu, FLAG_ZERO, cpu->Y == 0);
@@ -603,7 +603,7 @@ int ror(CPU6502* cpu, Operand op) {
   return 0;
 }
 
-int kil(CPU6502* cpu, Operand op __attribute__((unused))) {
+int kil(CPU6502* cpu, Operand op) {
   cpu->jammed = true;
   return 0;
 }
