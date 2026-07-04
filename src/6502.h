@@ -4,12 +4,7 @@
 #include <lib6502/6502.h>
 #include <stdint.h>
 
-typedef void (*MicroOpFn)(CPU6502* cpu);
-
-typedef struct OpDef {
-  const char* name;
-  MicroOpFn micro_ops[8];
-} OpDef;
+#include "micro_ops.h"
 
 typedef struct OpState {
   OpDef* def;

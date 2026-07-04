@@ -7,6 +7,7 @@
 
 #include "addressing.h"
 #include "flags.h"
+#include "micro_ops.h"
 #include "opcodes.h"
 #include "stack.h"
 #include "vectors.h"
@@ -43,40 +44,13 @@ CPU6502* cpu6502_create(CPU6502Variant variant, CPU6502ReadFn read,
   return cpu;
 }
 
-void finish_op(CPU6502* cpu) { memset(&cpu->op, 0, sizeof(cpu->op)); }
-
 void cpu6502_reset(CPU6502* cpu) { cpu->reset_requested = true; }
 
-void dummy(CPU6502* cpu) { (void)cpu; }
-
-void dec_sp(CPU6502* cpu) { cpu->SP--; }
-
-void read_reset_low(CPU6502* cpu) {
-  cpu->op.addr_lo = cpu->read(cpu->ctx, 0xFFFC);
-}
-
-void read_reset_high_finish(CPU6502* cpu) {
-  cpu->op.addr_hi = cpu->read(cpu->ctx, 0xFFFD);
-  uint16_t addr = (cpu->op.addr_hi << 8) | cpu->op.addr_lo;
-  cpu->PC = addr;
-  cpu->status |= FLAG_INTERRUPT_DISABLE;
-
-  cpu->reset_requested = false;
-  finish_op(cpu);
-}
-
-OpDef reset_sequence = {.name = "RESET",
-                        .micro_ops = {
-                            dummy,
-                            dummy,
-                            dec_sp,
-                            dec_sp,
-                            dec_sp,
-                            read_reset_low,
-                            read_reset_high_finish,
-                        }};
-
 void cpu6502_tick(CPU6502* cpu) {
+  if (cpu->jammed) {
+    return;
+  }
+
   if (cpu->op.def == NULL) {
     if (cpu->reset_requested) {
       cpu->op.def = &reset_sequence;
