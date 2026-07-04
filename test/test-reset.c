@@ -25,6 +25,9 @@ int main(void) {
   bus.mem[0xFFFD] = 0x12;
 
   cpu6502_reset(cpu);
+  for (int i = 0; i < 7; i++) {
+    cpu6502_tick(cpu);
+  }
 
   CPU6502State state = cpu6502_get_state(cpu);
 

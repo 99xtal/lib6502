@@ -4,6 +4,17 @@
 #include <lib6502/6502.h>
 #include <stdint.h>
 
+typedef enum {
+  OP_RESET,
+} OpType;
+
+typedef struct OpState {
+  OpType type;
+  uint8_t cycle;
+  uint8_t addr_lo;
+  uint8_t addr_hi;
+} OpState;
+
 struct CPU6502 {
   CPU6502Variant variant;
   uint8_t A;
@@ -18,6 +29,11 @@ struct CPU6502 {
 
   // stops program execution, set by undocumented *KIL opcode
   bool jammed;
+
+  // interrupt flags
+  bool reset_requested;
+
+  OpState op;
 };
 
 #endif

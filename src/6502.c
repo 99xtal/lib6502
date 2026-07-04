@@ -43,19 +43,56 @@ CPU6502* cpu6502_create(CPU6502Variant variant, CPU6502ReadFn read,
   return cpu;
 }
 
-int cpu6502_reset(CPU6502* cpu) {
-  int clock_cycles = 7;
-  uint16_t reset_position = read_vector(cpu, VECTOR_RESET);
+void finish_op(CPU6502* cpu) { memset(&cpu->op, 0, sizeof(cpu->op)); }
 
-  cpu->SP = cpu->SP - 3;
-  cpu->PC = reset_position;
+int cpu6502_reset(CPU6502* cpu) { cpu->reset_requested = true; }
 
-  set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
+void tick_reset(CPU6502* cpu) {
+  switch (cpu->op.cycle++) {
+    case 0:
+    case 1:
+      break;
+    case 2: {
+      cpu->SP--;
+      break;
+    }
+    case 3: {
+      cpu->SP--;
+      break;
+    }
+    case 4: {
+      cpu->SP--;
+      break;
+    }
+    case 5: {
+      cpu->op.addr_lo = cpu->read(cpu->ctx, 0xFFFC);
+      break;
+    }
+    case 6: {
+      cpu->op.addr_hi = cpu->read(cpu->ctx, 0xFFFD);
+      uint16_t addr = (cpu->op.addr_hi << 8) | cpu->op.addr_lo;
+      cpu->PC = addr;
+      cpu->status |= FLAG_INTERRUPT_DISABLE;
 
-  return clock_cycles;
+      cpu->reset_requested = false;
+      finish_op(cpu);
+      break;
+    }
+  }
 }
 
-void cpu6502_tick(CPU6502* cpu) {}
+void cpu6502_tick(CPU6502* cpu) {
+  if (cpu->reset_requested && cpu->op.cycle == 0) {
+    cpu->op.type = OP_RESET;
+  }
+
+  switch (cpu->op.type) {
+    case OP_RESET: {
+      tick_reset(cpu);
+      break;
+    }
+  }
+}
 
 int cpu6502_step(CPU6502* cpu) {
   if (cpu->jammed) {
