@@ -18,7 +18,9 @@ void dummy_read(CPU6502* cpu, uint16_t addr) { read(cpu, addr); }
 
 void inc_sp(CPU6502* cpu) { cpu->SP++; }
 
-void dummy_pc_read(CPU6502* cpu) { read(cpu, cpu->PC++); }
+void dummy_pc_read(CPU6502* cpu) { read(cpu, cpu->PC); }
+
+void dummy_pc_read_and_inc(CPU6502* cpu) { read(cpu, cpu->PC++); }
 
 void set_abs_addr_low(CPU6502* cpu) { cpu->op.addr_lo = read(cpu, cpu->PC++); }
 
@@ -129,6 +131,15 @@ void txs_imp(CPU6502* cpu) {
   finish_op(cpu);
 }
 
+void tsx_imp(CPU6502* cpu) {
+  dummy_read(cpu, cpu->PC);
+
+  cpu->X = cpu->SP;
+  set_nz(cpu, cpu->X);
+
+  finish_op(cpu);
+}
+
 void tax_imp(CPU6502* cpu) {
   dummy_read(cpu, cpu->PC);
 
@@ -156,6 +167,59 @@ void tya_imp(CPU6502* cpu) {
   finish_op(cpu);
 }
 
+void tay_imp(CPU6502* cpu) {
+  dummy_read(cpu, cpu->PC);
+
+  cpu->Y = cpu->A;
+  set_nz(cpu, cpu->Y);
+
+  finish_op(cpu);
+}
+
+void pha_imp(CPU6502* cpu) {
+  stack_push_u8(cpu, cpu->A);
+
+  finish_op(cpu);
+}
+
+void php_imp(CPU6502* cpu) {
+  uint8_t status = cpu->status;
+  status |= FLAG_BREAK;
+  status |= FLAG_UNUSED;  // bit 5 is usually always pushed as 1
+
+  stack_push_u8(cpu, status);
+
+  finish_op(cpu);
+}
+
+void pla_imp(CPU6502* cpu) {
+  cpu->A = cpu->read(cpu->ctx, 0x0100 | cpu->SP);
+
+  set_nz(cpu, cpu->A);
+
+  finish_op(cpu);
+}
+
+void plp_imp(CPU6502* cpu) {
+  uint8_t status_value = cpu->read(cpu->ctx, 0x0100 | cpu->SP);
+
+  cpu->status = (status_value & ~FLAG_BREAK) | FLAG_UNUSED;
+
+  finish_op(cpu);
+}
+
+/**
+ * Logical
+ */
+void eor_imm(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+  cpu->A ^= value;
+
+  set_nz(cpu, cpu->A);
+
+  finish_op(cpu);
+}
+
 /**
  * Arithmetic
  */
@@ -165,6 +229,88 @@ void cmp_imm(CPU6502* cpu) {
 
   set_flag(cpu, FLAG_CARRY, cpu->A >= value);
   set_flag(cpu, FLAG_ZERO, cpu->A == value);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  finish_op(cpu);
+}
+
+void cmp_abs(CPU6502* cpu) {
+  uint16_t addr = full_addr(cpu);
+  uint8_t value = read(cpu, addr);
+  uint8_t result = (uint16_t)cpu->A - value;
+
+  set_flag(cpu, FLAG_CARRY, cpu->A >= value);
+  set_flag(cpu, FLAG_ZERO, cpu->A == value);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  finish_op(cpu);
+}
+
+void cpy_imm(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+  uint8_t result = (uint16_t)cpu->Y - value;
+
+  set_flag(cpu, FLAG_CARRY, cpu->Y >= value);
+  set_flag(cpu, FLAG_ZERO, cpu->Y == value);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  finish_op(cpu);
+}
+
+void adc_op(CPU6502* cpu, uint8_t value) {
+  uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
+
+  if (get_flag(cpu, FLAG_DECIMAL_MODE) &&
+      cpu->variant != CPU6502_VARIANT_RP2A03) {
+    uint16_t low_nibble = (cpu->A & 0x0F) + (value & 0x0F) + carry_in;
+    if (low_nibble > 0x09) {
+      low_nibble += 0x06;
+    }
+
+    uint16_t carry_to_high = (low_nibble >> 4) & 0x01;
+    uint16_t high_nibble =
+        (cpu->A & 0xF0) + (value & 0xF0) + (carry_to_high << 4);
+
+    if (high_nibble > 0x9F) {
+      high_nibble += 0x60;
+    }
+
+    set_flag(cpu, FLAG_CARRY, high_nibble > 0xFF);
+
+    uint16_t decimal_sum = (high_nibble & 0xF0) | (low_nibble & 0x0F);
+    uint8_t decimal_result = (uint8_t)decimal_sum;
+
+    cpu->A = decimal_result;
+
+  } else {
+    uint16_t binary_sum = (uint16_t)cpu->A + value + carry_in;
+    uint8_t binary_result = (uint8_t)binary_sum;
+
+    set_flag(cpu, FLAG_CARRY, binary_sum > 0xFF);
+    set_flag(cpu, FLAG_ZERO, binary_result == 0);
+    set_flag(cpu, FLAG_NEGATIVE, (binary_result & 0x80) != 0);
+    // Overflow happens when A and value have the same sign,
+    // but the result has a different sign.
+    set_flag(cpu, FLAG_OVERFLOW,
+             (~(cpu->A ^ value) & (cpu->A ^ binary_result) & 0x80) != 0);
+    cpu->A = binary_result;
+  }
+}
+
+void adc_imm(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+
+  adc_op(cpu, value);
+
+  finish_op(cpu);
+}
+
+void cpx_imm(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+  uint8_t result = (uint16_t)cpu->X - value;
+
+  set_flag(cpu, FLAG_CARRY, cpu->X >= value);
+  set_flag(cpu, FLAG_ZERO, cpu->X == value);
   set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
 
   finish_op(cpu);
@@ -388,12 +534,21 @@ const OpDef instruction_defs[256] = {
             .name = "BRK",
             .micro_ops =
                 {
-                    dummy_pc_read,
+                    dummy_pc_read_and_inc,
                     push_pc_high,
                     push_pc_low,
                     push_p_with_break,
                     read_irq_low,
                     read_irq_high_finish,
+                },
+        },
+    [0x08] =
+        {
+            .name = "PHP",
+            .micro_ops =
+                {
+                    dummy_pc_read,
+                    php_imp,
                 },
         },
     [0x10] =
@@ -412,6 +567,16 @@ const OpDef instruction_defs[256] = {
             .micro_ops =
                 {
                     clc_imp,
+                },
+        },
+    [0x28] =
+        {
+            .name = "PLP",
+            .micro_ops =
+                {
+                    dummy_pc_read,
+                    inc_sp,
+                    plp_imp,
                 },
         },
     [0x30] =
@@ -437,11 +602,28 @@ const OpDef instruction_defs[256] = {
             .name = "RTI",
             .micro_ops =
                 {
-                    dummy_pc_read,
+                    dummy_pc_read_and_inc,
                     inc_sp,
                     pull_p,
                     pull_pc_low,
                     pull_pc_high_finish,
+                },
+        },
+    [0x48] =
+        {
+            .name = "PHA",
+            .micro_ops =
+                {
+                    dummy_pc_read,
+                    pha_imp,
+                },
+        },
+    [0x49] =
+        {
+            .name = "EOR imm.",
+            .micro_ops =
+                {
+                    eor_imm,
                 },
         },
     [0x4C] =
@@ -469,6 +651,24 @@ const OpDef instruction_defs[256] = {
             .micro_ops =
                 {
                     cli_imp,
+                },
+        },
+    [0x68] =
+        {
+            .name = "PLA",
+            .micro_ops =
+                {
+                    dummy_pc_read,
+                    inc_sp,
+                    pla_imp,
+                },
+        },
+    [0x69] =
+        {
+            .name = "ADC imm.",
+            .micro_ops =
+                {
+                    adc_imm,
                 },
         },
     [0x70] =
@@ -554,6 +754,14 @@ const OpDef instruction_defs[256] = {
                     ldx_imm,
                 },
         },
+    [0xA8] =
+        {
+            .name = "TAY",
+            .micro_ops =
+                {
+                    tay_imp,
+                },
+        },
     [0xA9] =
         {
             .name = "LDA #$%02X",
@@ -598,6 +806,22 @@ const OpDef instruction_defs[256] = {
                     clv_imp,
                 },
         },
+    [0xBA] =
+        {
+            .name = "TSX",
+            .micro_ops =
+                {
+                    tsx_imp,
+                },
+        },
+    [0xC0] =
+        {
+            .name = "CPY imm.",
+            .micro_ops =
+                {
+                    cpy_imm,
+                },
+        },
     [0xC8] =
         {
             .name = "INY",
@@ -622,6 +846,16 @@ const OpDef instruction_defs[256] = {
                     dex_imp,
                 },
         },
+    [0xCD] =
+        {
+            .name = "CMP abs.",
+            .micro_ops =
+                {
+                    set_abs_addr_low,
+                    set_abs_addr_high,
+                    cmp_abs,
+                },
+        },
     [0xD0] =
         {
             .name = "BNE",
@@ -638,6 +872,14 @@ const OpDef instruction_defs[256] = {
             .micro_ops =
                 {
                     cld_imp,
+                },
+        },
+    [0xE0] =
+        {
+            .name = "CPX imm.",
+            .micro_ops =
+                {
+                    cpx_imm,
                 },
         },
     [0xEA] =

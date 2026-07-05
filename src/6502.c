@@ -59,8 +59,8 @@ void cpu6502_tick(CPU6502* cpu) {
     } else {
       uint8_t opcode = cpu->read(cpu->ctx, cpu->PC++);
       cpu->op.def = &instruction_defs[opcode];
+
       return;
-      // instruction
     }
   }
 
