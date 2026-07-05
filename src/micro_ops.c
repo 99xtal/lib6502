@@ -22,9 +22,15 @@ void dummy_pc_read(CPU6502* cpu) { read(cpu, cpu->PC); }
 
 void dummy_pc_read_and_inc(CPU6502* cpu) { read(cpu, cpu->PC++); }
 
-void set_abs_addr_low(CPU6502* cpu) { cpu->op.addr_lo = read(cpu, cpu->PC++); }
+void read_pc_addr_low(CPU6502* cpu) { cpu->op.addr_lo = read(cpu, cpu->PC++); }
 
-void set_abs_addr_high(CPU6502* cpu) { cpu->op.addr_hi = read(cpu, cpu->PC++); }
+void read_pc_addr_high(CPU6502* cpu) { cpu->op.addr_hi = read(cpu, cpu->PC++); }
+
+void fetch_pointer_addr_low(CPU6502* cpu) {
+  uint16_t addr = full_addr(cpu);
+  cpu->op.ptr = addr;
+  cpu->op.addr_lo = read(cpu, addr);
+}
 
 void push_pc_high(CPU6502* cpu) { stack_push_u8(cpu, (cpu->PC >> 8) & 0xFF); }
 
@@ -220,6 +226,26 @@ void eor_imm(CPU6502* cpu) {
   finish_op(cpu);
 }
 
+void ora_imm(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->PC++);
+  cpu->A |= value;
+
+  set_nz(cpu, cpu->A);
+
+  finish_op(cpu);
+}
+
+void ora_addr(CPU6502* cpu) {
+  uint16_t addr = full_addr(cpu);
+
+  uint8_t value = read(cpu, addr);
+  cpu->A |= value;
+
+  set_nz(cpu, cpu->A);
+
+  finish_op(cpu);
+}
+
 /**
  * Arithmetic
  */
@@ -352,6 +378,28 @@ void dey_imp(CPU6502* cpu) {
  */
 void jmp_abs_finish(CPU6502* cpu) {
   cpu->op.addr_hi = read(cpu, cpu->PC);
+  uint16_t addr = full_addr(cpu);
+
+  cpu->PC = addr;
+
+  finish_op(cpu);
+}
+
+void jmp_ind(CPU6502* cpu) {
+  /**
+   * Original 6502 JMP ($xxxx) bug.
+   *
+   * The CPU incorrectly wraps the high-byte fetch within the same page.
+   *
+   * Example:
+   *   JMP ($30FF)
+   *   low byte  = memory[$30FF]
+   *   high byte = memory[$3000]  // should be $3100
+   */
+  uint16_t target_high_addr =
+      (cpu->op.ptr & 0xFF00) | ((cpu->op.ptr + 1) & 0x00FF);
+
+  cpu->op.addr_hi = cpu->read(cpu->ctx, target_high_addr);
   uint16_t addr = full_addr(cpu);
 
   cpu->PC = addr;
@@ -542,6 +590,15 @@ const OpDef instruction_defs[256] = {
                     read_irq_high_finish,
                 },
         },
+    [0x05] =
+        {
+            .name = "ORA zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    ora_addr,
+                },
+        },
     [0x08] =
         {
             .name = "PHP",
@@ -549,6 +606,24 @@ const OpDef instruction_defs[256] = {
                 {
                     dummy_pc_read,
                     php_imp,
+                },
+        },
+    [0x09] =
+        {
+            .name = "ORA imm.",
+            .micro_ops =
+                {
+                    ora_imm,
+                },
+        },
+    [0x0D] =
+        {
+            .name = "ORA abs.",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    ora_addr,
                 },
         },
     [0x10] =
@@ -631,7 +706,7 @@ const OpDef instruction_defs[256] = {
             .name = "JMP $%04X",
             .micro_ops =
                 {
-                    set_abs_addr_low,
+                    read_pc_addr_low,
                     jmp_abs_finish,
                 },
         },
@@ -669,6 +744,17 @@ const OpDef instruction_defs[256] = {
             .micro_ops =
                 {
                     adc_imm,
+                },
+        },
+    [0x6C] =
+        {
+            .name = "JMP indirect",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    fetch_pointer_addr_low,
+                    jmp_ind,
                 },
         },
     [0x70] =
@@ -710,8 +796,8 @@ const OpDef instruction_defs[256] = {
             .name = "STA $%04X",
             .micro_ops =
                 {
-                    set_abs_addr_low,
-                    set_abs_addr_high,
+                    read_pc_addr_low,
+                    read_pc_addr_high,
                     sta_abs,
                 },
         },
@@ -783,8 +869,8 @@ const OpDef instruction_defs[256] = {
             .name = "LDA $%04X",
             .micro_ops =
                 {
-                    set_abs_addr_low,
-                    set_abs_addr_high,
+                    read_pc_addr_low,
+                    read_pc_addr_high,
                     lda_abs,
                 },
         },
@@ -851,8 +937,8 @@ const OpDef instruction_defs[256] = {
             .name = "CMP abs.",
             .micro_ops =
                 {
-                    set_abs_addr_low,
-                    set_abs_addr_high,
+                    read_pc_addr_low,
+                    read_pc_addr_high,
                     cmp_abs,
                 },
         },
