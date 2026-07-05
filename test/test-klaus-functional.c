@@ -18,7 +18,8 @@ int main(void) {
   TestMachine machine;
   memset(&machine, 0, sizeof(machine));
 
-  if (load_binary(&machine, "test/roms/klaus-functional.bin", LOAD_ADDR) != 0) {
+  if (load_binary(&machine, "build/test/roms/klaus-functional.bin",
+                  LOAD_ADDR) != 0) {
     return 1;
   }
 
@@ -26,9 +27,7 @@ int main(void) {
       cpu6502_create(CPU6502_VARIANT_NMOS, test_read, test_write, &machine);
   cpu6502_reset(cpu);
 
-  cpu6502_set_pc(cpu, START_ADDR);
-
-  for (uint64_t step = 0; step < MAX_STEPS; step++) {
+  for (uint64_t tick = 0; tick < MAX_STEPS; tick++) {
     CPU6502State state = cpu6502_get_state(cpu);
 
     if (state.PC == SUCCESS_PC) {
@@ -36,19 +35,7 @@ int main(void) {
       return 0;
     }
 
-    uint16_t old_pc = state.PC;
-
-    int cycles = cpu6502_step(cpu);
-    if (cycles < 0) {
-      fprintf(stderr, "CPU error at PC=$%04X\n", state.PC);
-      return 1;
-    }
-
-    // Klaus failure traps often loop forever at a failing PC.
-    if (state.PC == old_pc && state.PC != SUCCESS_PC) {
-      fprintf(stderr, "FAIL: stuck at PC=$%04X\n", state.PC);
-      return 1;
-    }
+    cpu6502_tick(cpu);
   }
 
   CPU6502State state = cpu6502_get_state(cpu);
