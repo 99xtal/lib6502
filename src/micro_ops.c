@@ -240,6 +240,46 @@ void bpl_fetch_offset(CPU6502* cpu) {
   }
 }
 
+void bmi_fetch_offset(CPU6502* cpu) {
+  cpu->op.offset = (int8_t)read(cpu, cpu->PC++);
+
+  if (!get_flag(cpu, FLAG_NEGATIVE)) {
+    finish_op(cpu);
+  }
+}
+
+void bvc_fetch_offset(CPU6502* cpu) {
+  cpu->op.offset = (int8_t)read(cpu, cpu->PC++);
+
+  if (get_flag(cpu, FLAG_OVERFLOW)) {
+    finish_op(cpu);
+  }
+}
+
+void bvs_fetch_offset(CPU6502* cpu) {
+  cpu->op.offset = (int8_t)read(cpu, cpu->PC++);
+
+  if (!get_flag(cpu, FLAG_OVERFLOW)) {
+    finish_op(cpu);
+  }
+}
+
+void bcc_fetch_offset(CPU6502* cpu) {
+  cpu->op.offset = (int8_t)read(cpu, cpu->PC++);
+
+  if (get_flag(cpu, FLAG_CARRY)) {
+    finish_op(cpu);
+  }
+}
+
+void bcs_fetch_offset(CPU6502* cpu) {
+  cpu->op.offset = (int8_t)read(cpu, cpu->PC++);
+
+  if (!get_flag(cpu, FLAG_CARRY)) {
+    finish_op(cpu);
+  }
+}
+
 void branch_op(CPU6502* cpu) {
   dummy_read(cpu, cpu->PC);
 
@@ -374,6 +414,16 @@ const OpDef instruction_defs[256] = {
                     clc_imp,
                 },
         },
+    [0x30] =
+        {
+            .name = "BMI",
+            .micro_ops =
+                {
+                    bmi_fetch_offset,
+                    branch_op,
+                    branch_page_fix,
+                },
+        },
     [0x38] =
         {
             .name = "SEC",
@@ -403,12 +453,32 @@ const OpDef instruction_defs[256] = {
                     jmp_abs_finish,
                 },
         },
+    [0x50] =
+        {
+            .name = "BVC",
+            .micro_ops =
+                {
+                    bvc_fetch_offset,
+                    branch_op,
+                    branch_page_fix,
+                },
+        },
     [0x58] =
         {
             .name = "CLI",
             .micro_ops =
                 {
                     cli_imp,
+                },
+        },
+    [0x70] =
+        {
+            .name = "BVS",
+            .micro_ops =
+                {
+                    bvs_fetch_offset,
+                    branch_op,
+                    branch_page_fix,
                 },
         },
     [0x78] =
@@ -443,6 +513,16 @@ const OpDef instruction_defs[256] = {
                     set_abs_addr_low,
                     set_abs_addr_high,
                     sta_abs,
+                },
+        },
+    [0x90] =
+        {
+            .name = "BCC",
+            .micro_ops =
+                {
+                    bcc_fetch_offset,
+                    branch_op,
+                    branch_page_fix,
                 },
         },
     [0x98] =
@@ -498,6 +578,16 @@ const OpDef instruction_defs[256] = {
                     set_abs_addr_low,
                     set_abs_addr_high,
                     lda_abs,
+                },
+        },
+    [0xB0] =
+        {
+            .name = "BCS",
+            .micro_ops =
+                {
+                    bcs_fetch_offset,
+                    branch_op,
+                    branch_page_fix,
                 },
         },
     [0xB8] =
