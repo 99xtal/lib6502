@@ -11,6 +11,8 @@ typedef struct OpState {
   uint8_t cycle;
   uint8_t addr_lo;
   uint8_t addr_hi;
+  int8_t offset;
+  uint16_t old_pc;
 } OpState;
 
 struct CPU6502 {
