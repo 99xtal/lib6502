@@ -8,6 +8,10 @@
 
 uint8_t read(CPU6502* cpu, uint16_t addr) { return cpu->read(cpu->ctx, addr); }
 
+void write(CPU6502* cpu, uint16_t addr, uint8_t value) {
+  cpu->write(cpu->ctx, addr, value);
+}
+
 uint16_t full_addr(CPU6502* cpu) {
   return (cpu->op.addr_hi << 8) | cpu->op.addr_lo;
 }
@@ -29,6 +33,8 @@ void dummy_temp_addr_read(CPU6502* cpu) { read(cpu, cpu->op.temp_addr); }
 void read_pc_addr_low(CPU6502* cpu) { cpu->op.addr_lo = read(cpu, cpu->PC++); }
 
 void read_pc_addr_high(CPU6502* cpu) { cpu->op.addr_hi = read(cpu, cpu->PC++); }
+
+void read_addr_data(CPU6502* cpu) { cpu->op.data = read(cpu, full_addr(cpu)); }
 
 void fetch_ptr(CPU6502* cpu) { cpu->op.ptr = read(cpu, cpu->PC++); }
 
@@ -76,6 +82,8 @@ void read_pc_addr_high_add_x(CPU6502* cpu) {
 
   uint16_t base = full_addr(cpu);
   uint16_t addr = base + cpu->X;
+  cpu->op.addr_hi = (addr & 0xFFEE) >> 8;
+  cpu->op.addr_lo = (addr & 0xFF);
 
   cpu->op.addr = addr;
   cpu->op.page_crossed = (base & 0xFF00) != (addr & 0xFF00);
@@ -139,6 +147,11 @@ void push_p_with_break(CPU6502* cpu) {
 void pull_p(CPU6502* cpu) {
   cpu->status = cpu->read(cpu->ctx, 0x0100 | cpu->SP);
   cpu->SP++;
+}
+
+void write_data_and_finish(CPU6502* cpu) {
+  write(cpu, full_addr(cpu), cpu->op.data);
+  finish_op(cpu);
 }
 
 void read_irq_low(CPU6502* cpu) {
@@ -427,6 +440,17 @@ void ora_addr(CPU6502* cpu) {
   finish_op(cpu);
 }
 
+void bit_addr(CPU6502* cpu) {
+  uint16_t addr = full_addr(cpu);
+  uint8_t value = cpu->read(cpu->ctx, addr);
+
+  set_flag(cpu, FLAG_ZERO, (cpu->A & value) == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (value & 0x80) != 0);
+  set_flag(cpu, FLAG_OVERFLOW, (value & 0x40) != 0);
+
+  finish_op(cpu);
+}
+
 /**
  * Arithmetic
  */
@@ -603,6 +627,126 @@ void dey_imp(CPU6502* cpu) {
   cpu->Y--;
   set_nz(cpu, cpu->Y);
   finish_op(cpu);
+}
+
+/**
+ * Shifts
+ */
+void asl_acc(CPU6502* cpu) {
+  uint8_t value = cpu->A;
+
+  uint8_t result = value << 1;
+  uint8_t last_bit = (value & 0x80) != 0;
+
+  cpu->A = result;
+
+  set_flag(cpu, FLAG_CARRY, last_bit);
+  set_nz(cpu, cpu->A);
+
+  finish_op(cpu);
+}
+
+void asl_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);  // old value
+
+  uint8_t result = cpu->op.data << 1;
+  uint8_t last_bit = (cpu->op.data & 0x80) != 0;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, last_bit);
+  set_nz(cpu, cpu->op.data);
+}
+
+void lsr_acc(CPU6502* cpu) {
+  uint8_t value = cpu->A;
+
+  uint8_t result = value >> 1;
+  uint8_t first_bit = (value & 0x01) != 0;
+
+  cpu->A = result;
+
+  set_flag(cpu, FLAG_CARRY, first_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, 0);
+
+  finish_op(cpu);
+}
+
+void lsr_dummy_write_and_compute(CPU6502* cpu) {
+  uint8_t result = cpu->op.data >> 1;
+  uint8_t first_bit = (cpu->op.data & 0x01) != 0;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, first_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, 0);
+}
+
+void rol_acc(CPU6502* cpu) {
+  uint8_t value = cpu->A;
+
+  uint8_t result = value << 1;
+  uint8_t old_last_bit = (value & 0x80) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit;
+
+  cpu->A = result;
+
+  set_flag(cpu, FLAG_CARRY, old_last_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  finish_op(cpu);
+}
+
+void rol_dummy_write_and_compute(CPU6502* cpu) {
+  uint8_t value = cpu->op.data;
+
+  uint8_t result = value << 1;
+  uint8_t old_last_bit = (value & 0x80) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, old_last_bit);
+  set_nz(cpu, result);
+}
+
+void ror_acc(CPU6502* cpu) {
+  uint8_t value = cpu->A;
+
+  uint8_t result = value >> 1;
+  uint8_t old_first_bit = (value & 0x01) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit << 7;
+
+  cpu->A = result;
+
+  set_flag(cpu, FLAG_CARRY, old_first_bit);
+  set_nz(cpu, result);
+
+  finish_op(cpu);
+}
+
+void ror_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);  // old value
+
+  uint8_t result = cpu->op.data >> 1;
+  uint8_t old_first_bit = (cpu->op.data & 0x01) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit << 7;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, old_first_bit);
+  set_nz(cpu, result);
 }
 
 /**
@@ -848,6 +992,17 @@ const OpDef instruction_defs[256] = {
                     ora_addr,
                 },
         },
+    [0x06] =
+        {
+            .name = "ASL zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_addr_data,
+                    asl_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0x08] =
         {
             .name = "PHP",
@@ -865,6 +1020,14 @@ const OpDef instruction_defs[256] = {
                     ora_imm,
                 },
         },
+    [0x0A] =
+        {
+            .name = "ASL acc.",
+            .micro_ops =
+                {
+                    asl_acc,
+                },
+        },
     [0x0D] =
         {
             .name = "ORA abs.",
@@ -873,6 +1036,18 @@ const OpDef instruction_defs[256] = {
                     read_pc_addr_low,
                     read_pc_addr_high,
                     ora_addr,
+                },
+        },
+    [0x0E] =
+        {
+            .name = "ASL abs",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    read_addr_data,
+                    asl_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x10] =
@@ -885,12 +1060,37 @@ const OpDef instruction_defs[256] = {
                     branch_page_fix,
                 },
         },
+    [0x16] =
+        {
+            .name = "ASL zp,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_low_add_x,
+                    read_addr_data,
+                    asl_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0x18] =
         {
             .name = "CLC",
             .micro_ops =
                 {
                     clc_imp,
+                },
+        },
+    [0x1E] =
+        {
+            .name = "ASL abs,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high_add_x,
+                    dummy_temp_addr_read,
+                    read_addr_data,
+                    asl_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x20] =
@@ -905,6 +1105,26 @@ const OpDef instruction_defs[256] = {
                     jsr_abs,
                 },
         },
+    [0x24] =
+        {
+            .name = "BIT zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    bit_addr,
+                },
+        },
+    [0x26] =
+        {
+            .name = "ROL zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_addr_data,
+                    rol_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0x28] =
         {
             .name = "PLP",
@@ -913,6 +1133,36 @@ const OpDef instruction_defs[256] = {
                     dummy_pc_read,
                     inc_sp,
                     plp_imp,
+                },
+        },
+    [0x2A] =
+        {
+            .name = "ROL acc.",
+            .micro_ops =
+                {
+                    rol_acc,
+                },
+        },
+    [0x2C] =
+        {
+            .name = "BIT abs",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    bit_addr,
+                },
+        },
+    [0x2E] =
+        {
+            .name = "ROL abs",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    read_addr_data,
+                    rol_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x30] =
@@ -925,12 +1175,37 @@ const OpDef instruction_defs[256] = {
                     branch_page_fix,
                 },
         },
+    [0x36] =
+        {
+            .name = "ROL zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_low_add_x,
+                    read_addr_data,
+                    rol_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0x38] =
         {
             .name = "SEC",
             .micro_ops =
                 {
                     sec_imp,
+                },
+        },
+    [0x3E] =
+        {
+            .name = "ROL abs,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high_add_x,
+                    dummy_temp_addr_read,
+                    read_addr_data,
+                    rol_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x40] =
@@ -943,6 +1218,17 @@ const OpDef instruction_defs[256] = {
                     pull_p,
                     pull_pc_low,
                     pull_pc_high_finish,
+                },
+        },
+    [0x46] =
+        {
+            .name = "LSR zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_addr_data,
+                    lsr_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x48] =
@@ -962,6 +1248,14 @@ const OpDef instruction_defs[256] = {
                     eor_imm,
                 },
         },
+    [0x4A] =
+        {
+            .name = "LSR acc.",
+            .micro_ops =
+                {
+                    lsr_acc,
+                },
+        },
     [0x4C] =
         {
             .name = "JMP $%04X",
@@ -969,6 +1263,18 @@ const OpDef instruction_defs[256] = {
                 {
                     read_pc_addr_low,
                     jmp_abs_finish,
+                },
+        },
+    [0x4E] =
+        {
+            .name = "LSR abs",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    read_addr_data,
+                    lsr_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x50] =
@@ -981,12 +1287,37 @@ const OpDef instruction_defs[256] = {
                     branch_page_fix,
                 },
         },
+    [0x56] =
+        {
+            .name = "LSR zp,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_low_add_x,
+                    read_addr_data,
+                    lsr_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0x58] =
         {
             .name = "CLI",
             .micro_ops =
                 {
                     cli_imp,
+                },
+        },
+    [0x5E] =
+        {
+            .name = "LSR abs,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high_add_x,
+                    dummy_temp_addr_read,
+                    read_addr_data,
+                    lsr_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x60] =
@@ -999,6 +1330,17 @@ const OpDef instruction_defs[256] = {
                     pull_pc_low,
                     pull_pc_high_no_inc,
                     rts_finish,
+                },
+        },
+    [0x66] =
+        {
+            .name = "ROR zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_addr_data,
+                    ror_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x68] =
@@ -1019,6 +1361,14 @@ const OpDef instruction_defs[256] = {
                     adc_imm,
                 },
         },
+    [0x6A] =
+        {
+            .name = "ROR acc.",
+            .micro_ops =
+                {
+                    ror_acc,
+                },
+        },
     [0x6C] =
         {
             .name = "JMP indirect",
@@ -1028,6 +1378,18 @@ const OpDef instruction_defs[256] = {
                     read_pc_addr_high,
                     fetch_pointer_addr_low,
                     jmp_ind,
+                },
+        },
+    [0x6E] =
+        {
+            .name = "ROR abs",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    read_addr_data,
+                    ror_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x70] =
@@ -1040,12 +1402,37 @@ const OpDef instruction_defs[256] = {
                     branch_page_fix,
                 },
         },
+    [0x76] =
+        {
+            .name = "ROR zp,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_low_add_x,
+                    read_addr_data,
+                    ror_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0x78] =
         {
             .name = "SEI",
             .micro_ops =
                 {
                     sei_imp,
+                },
+        },
+    [0x7E] =
+        {
+            .name = "ROR abs,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high_add_x,
+                    dummy_temp_addr_read,
+                    read_addr_data,
+                    ror_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0x81] =
@@ -1450,6 +1837,18 @@ const OpDef instruction_defs[256] = {
             .micro_ops =
                 {
                     cpy_imm,
+                },
+        },
+    [0xC1] =
+        {
+            .name = "CMP indexed ind.",
+            .micro_ops =
+                {
+                    fetch_ptr,
+                    read_ptr_add_x,
+                    read_ptr_addr_low,
+                    read_ptr_addr_high,
+                    cmp_addr,
                 },
         },
     [0xC4] =

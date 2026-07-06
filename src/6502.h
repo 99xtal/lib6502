@@ -17,6 +17,7 @@ typedef struct OpState {
   bool page_crossed;
   uint16_t addr;
   uint16_t temp_addr;
+  uint8_t data;
 } OpState;
 
 struct CPU6502 {
