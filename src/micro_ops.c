@@ -171,6 +171,20 @@ void read_irq_high_finish(CPU6502* cpu) {
   finish_op(cpu);
 }
 
+void read_nmi_low(CPU6502* cpu) {
+  cpu->op.addr_lo = cpu->read(cpu->ctx, 0xFFFA);
+}
+
+void read_nmi_high_finish(CPU6502* cpu) {
+  cpu->op.addr_hi = cpu->read(cpu->ctx, 0xFFFB);
+  uint16_t addr = full_addr(cpu);
+
+  cpu->PC = addr;
+  cpu->status |= FLAG_INTERRUPT_DISABLE;
+
+  finish_op(cpu);
+}
+
 void set_nz(CPU6502* cpu, uint8_t value) {
   set_flag(cpu, FLAG_NEGATIVE, (value & 0x80) != 0);
   set_flag(cpu, FLAG_ZERO, value == 0 ? 1 : 0);
@@ -1163,16 +1177,32 @@ void read_reset_high_finish(CPU6502* cpu) {
   finish_op(cpu);
 }
 
-const OpDef reset_sequence = {.name = "RESET",
-                              .micro_ops = {
-                                  dummy,
-                                  dummy,
-                                  dec_sp,
-                                  dec_sp,
-                                  dec_sp,
-                                  read_reset_low,
-                                  read_reset_high_finish,
-                              }};
+const OpDef reset_sequence = {
+    .name = "RESET",
+    .micro_ops =
+        {
+            dummy,
+            dummy,
+            dec_sp,
+            dec_sp,
+            dec_sp,
+            read_reset_low,
+            read_reset_high_finish,
+        },
+};
+
+const OpDef nmi_sequence = {
+    .name = "NMI",
+    .micro_ops =
+        {
+            dummy_pc_read_and_inc,
+            push_pc_high,
+            push_pc_low,
+            push_p_with_break,
+            read_nmi_low,
+            read_nmi_high_finish,
+        },
+};
 
 const OpDef
     instruction_defs[256] =

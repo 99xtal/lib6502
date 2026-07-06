@@ -11,6 +11,7 @@ typedef struct OpDef {
 } OpDef;
 
 extern const OpDef reset_sequence;
+extern const OpDef nmi_sequence;
 extern const OpDef instruction_defs[256];
 
 #endif

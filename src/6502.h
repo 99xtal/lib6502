@@ -37,6 +37,7 @@ struct CPU6502 {
 
   // interrupt flags
   bool reset_requested;
+  bool nmi_requested;
 
   OpState op;
 };

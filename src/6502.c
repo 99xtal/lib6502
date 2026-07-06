@@ -44,16 +44,24 @@ CPU6502* cpu6502_create(CPU6502Variant variant, CPU6502ReadFn read,
 
 void cpu6502_reset(CPU6502* cpu) { cpu->reset_requested = true; }
 
+void cpu6502_nmi(CPU6502* cpu) { cpu->nmi_requested = true; }
+
 void cpu6502_tick(CPU6502* cpu) {
   if (cpu->jammed) {
     return;
   }
 
-  if (cpu->op.def == NULL) {
-    if (cpu->reset_requested) {
-      cpu->op.def = &reset_sequence;
+  if (cpu->reset_requested) {
+    cpu->op.def = &reset_sequence;
 
-      cpu->reset_requested = false;
+    cpu->reset_requested = false;
+  }
+
+  if (cpu->op.def == NULL) {
+    if (cpu->nmi_requested) {
+      cpu->op.def = &nmi_sequence;
+
+      cpu->nmi_requested = false;
     } else {
       uint8_t opcode = cpu->read(cpu->ctx, cpu->PC++);
       cpu->op.def = &instruction_defs[opcode];
@@ -75,17 +83,6 @@ int cpu6502_step(CPU6502* cpu) {
   } while (cpu->op.def != NULL && !cpu->jammed);
 
   return cycles;
-}
-
-int cpu6502_nmi(CPU6502* cpu) {
-  stack_push_u16(cpu, cpu->PC);
-  stack_push_u8(cpu, (cpu->status & ~FLAG_BREAK) | FLAG_UNUSED);
-
-  set_flag(cpu, FLAG_INTERRUPT_DISABLE, 1);
-
-  cpu->PC = read_vector(cpu, VECTOR_NMI);
-
-  return 7;
 }
 
 void cpu6502_destroy(CPU6502* cpu) { free(cpu); }
