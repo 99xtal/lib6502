@@ -52,6 +52,7 @@ void cpu6502_tick(CPU6502* cpu) {
   }
 
   if (cpu->reset_requested) {
+    cpu->op = (OpState){0};
     cpu->op.def = &reset_sequence;
 
     cpu->reset_requested = false;
@@ -59,6 +60,7 @@ void cpu6502_tick(CPU6502* cpu) {
 
   if (cpu->op.def == NULL) {
     if (cpu->nmi_requested) {
+      cpu->op = (OpState){0};
       cpu->op.def = &nmi_sequence;
 
       cpu->nmi_requested = false;

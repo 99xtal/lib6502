@@ -147,6 +147,14 @@ void push_p_with_break(CPU6502* cpu) {
   stack_push_u8(cpu, status);
 }
 
+void push_p_without_break(CPU6502* cpu) {
+  uint8_t status = cpu->status;
+  status &= ~FLAG_BREAK;
+  status |= FLAG_UNUSED;  // bit 5 is usually always pushed as 1
+
+  stack_push_u8(cpu, status);
+}
+
 void pull_p(CPU6502* cpu) {
   cpu->status = cpu->read(cpu->ctx, 0x0100 | cpu->SP);
   cpu->SP++;
@@ -1195,10 +1203,10 @@ const OpDef nmi_sequence = {
     .name = "NMI",
     .micro_ops =
         {
-            dummy_pc_read_and_inc,
+            dummy_pc_read,
             push_pc_high,
             push_pc_low,
-            push_p_with_break,
+            push_p_without_break,
             read_nmi_low,
             read_nmi_high_finish,
         },
