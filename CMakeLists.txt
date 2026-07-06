@@ -23,10 +23,14 @@ target_include_directories(6502 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_compile_options(6502 PRIVATE
-    -Wall -Wextra -Wpedantic
-    $<$<CONFIG:Debug>:-g -O0>
-)
+if(MSVC)
+    target_compile_options(6502 PRIVATE /W4)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(6502 PRIVATE
+        -Wall -Wextra -Wpedantic
+        $<$<CONFIG:Debug>:-g -O0>
+    )
+endif()
 
 # ---- Tests ----
 
@@ -43,10 +47,14 @@ target_include_directories(6502_test_utils PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/test/utils
 )
 
-target_compile_options(6502_test_utils PRIVATE
-    -Wall -Wextra -Wpedantic
-    $<$<CONFIG:Debug>:-g -O0>
-)
+if(MSVC)
+    target_compile_options(6502_test_utils PRIVATE /W4)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(6502_test_utils PRIVATE
+        -Wall -Wextra -Wpedantic
+        $<$<CONFIG:Debug>:-g -O0>
+    )
+endif()
 
 target_link_libraries(6502_test_utils PRIVATE 6502)
 
@@ -60,10 +68,14 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
-    target_compile_options(${TEST_NAME} PRIVATE
-        -Wall -Wextra -Wpedantic
-        $<$<CONFIG:Debug>:-g -O0>
-    )
+    if(MSVC)
+        target_compile_options(${TEST_NAME} PRIVATE /W4)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${TEST_NAME} PRIVATE
+            -Wall -Wextra -Wpedantic
+            $<$<CONFIG:Debug>:-g -O0>
+        )
+    endif()
 
     target_link_libraries(${TEST_NAME} PRIVATE
         6502
