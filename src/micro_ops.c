@@ -453,31 +453,83 @@ void and_indexed_reread_fixed(CPU6502* cpu) {
   finish_op(cpu);
 }
 
-void eor_imm(CPU6502* cpu) {
-  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+void alu_eor(CPU6502* cpu, uint8_t value) {
   cpu->A ^= value;
 
   set_nz(cpu, cpu->A);
+}
+
+void eor_imm(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+
+  alu_eor(cpu, value);
 
   finish_op(cpu);
 }
 
-void ora_imm(CPU6502* cpu) {
-  uint8_t value = read(cpu, cpu->PC++);
+void eor_addr(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, full_addr(cpu));
+
+  alu_eor(cpu, value);
+
+  finish_op(cpu);
+}
+
+void eor_indexed_read_maybe_finish(CPU6502* cpu) {
+  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
+  uint8_t value = read(cpu, addr);
+
+  if (!cpu->op.page_crossed) {
+    alu_eor(cpu, value);
+    finish_op(cpu);
+  }
+}
+
+void eor_indexed_reread_fixed(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->op.addr);
+
+  alu_eor(cpu, value);
+
+  finish_op(cpu);
+}
+
+void alu_ora(CPU6502* cpu, uint8_t value) {
   cpu->A |= value;
 
   set_nz(cpu, cpu->A);
+}
+
+void ora_imm(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->PC++);
+
+  alu_ora(cpu, value);
 
   finish_op(cpu);
 }
 
 void ora_addr(CPU6502* cpu) {
   uint16_t addr = full_addr(cpu);
-
   uint8_t value = read(cpu, addr);
-  cpu->A |= value;
 
-  set_nz(cpu, cpu->A);
+  alu_ora(cpu, value);
+
+  finish_op(cpu);
+}
+
+void ora_indexed_read_maybe_finish(CPU6502* cpu) {
+  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
+  uint8_t value = read(cpu, addr);
+
+  if (!cpu->op.page_crossed) {
+    alu_ora(cpu, value);
+    finish_op(cpu);
+  }
+}
+
+void ora_indexed_reread_fixed(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->op.addr);
+
+  alu_ora(cpu, value);
 
   finish_op(cpu);
 }
@@ -569,7 +621,7 @@ void cpy_addr(CPU6502* cpu) {
   finish_op(cpu);
 }
 
-void adc_op(CPU6502* cpu, uint8_t value) {
+void alu_adc(CPU6502* cpu, uint8_t value) {
   uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
 
   if (get_flag(cpu, FLAG_DECIMAL_MODE) &&
@@ -612,7 +664,102 @@ void adc_op(CPU6502* cpu, uint8_t value) {
 void adc_imm(CPU6502* cpu) {
   uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
 
-  adc_op(cpu, value);
+  alu_adc(cpu, value);
+
+  finish_op(cpu);
+}
+
+void adc_addr(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, full_addr(cpu));
+
+  alu_adc(cpu, value);
+
+  finish_op(cpu);
+}
+
+void adc_indexed_read_maybe_finish(CPU6502* cpu) {
+  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
+  uint8_t value = read(cpu, addr);
+
+  if (!cpu->op.page_crossed) {
+    alu_adc(cpu, value);
+
+    finish_op(cpu);
+  }
+}
+
+void adc_indexed_reread_fixed(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->op.addr);
+
+  alu_adc(cpu, value);
+
+  finish_op(cpu);
+}
+
+void alu_sbc(CPU6502* cpu, uint8_t value) {
+  uint8_t carry = get_flag(cpu, FLAG_CARRY) ? 1 : 0;
+  uint8_t old_a = cpu->A;
+
+  uint16_t binary_diff = (uint16_t)old_a + (uint8_t)(~value) + carry;
+  uint8_t binary_result = (uint8_t)binary_diff;
+
+  set_flag(cpu, FLAG_CARRY, binary_diff > 0xFF);
+  set_flag(cpu, FLAG_ZERO, binary_result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (binary_result & 0x80) != 0);
+  set_flag(cpu, FLAG_OVERFLOW,
+           ((old_a ^ value) & (old_a ^ binary_result) & 0x80) != 0);
+
+  if (get_flag(cpu, FLAG_DECIMAL_MODE) &&
+      cpu->variant != CPU6502_VARIANT_RP2A03) {
+    int16_t al = (old_a & 0x0F) - (value & 0x0F) - (1 - carry);
+    int16_t ah = (old_a >> 4) - (value >> 4);
+
+    if (al < 0) {
+      al -= 6;
+      ah -= 1;
+    }
+
+    if (ah < 0) {
+      ah -= 6;
+    }
+
+    cpu->A = (uint8_t)(((ah << 4) & 0xF0) | (al & 0x0F));
+  } else {
+    cpu->A = binary_result;
+  }
+}
+
+void sbc_imm(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+
+  alu_sbc(cpu, value);
+
+  finish_op(cpu);
+}
+
+void sbc_addr(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, full_addr(cpu));
+
+  alu_sbc(cpu, value);
+
+  finish_op(cpu);
+}
+
+void sbc_indexed_read_maybe_finish(CPU6502* cpu) {
+  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
+  uint8_t value = read(cpu, addr);
+
+  if (!cpu->op.page_crossed) {
+    alu_adc(cpu, value);
+
+    finish_op(cpu);
+  }
+}
+
+void sbc_indexed_reread_fixed(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->op.addr);
+
+  alu_sbc(cpu, value);
 
   finish_op(cpu);
 }
@@ -1043,6 +1190,18 @@ const OpDef
                             read_irq_high_finish,
                         },
                 },
+            [0x01] =
+                {
+                    .name = "ORA indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            ora_addr,
+                        },
+                },
             [0x05] =
                 {
                     .name = "ORA zp",
@@ -1120,6 +1279,28 @@ const OpDef
                             branch_page_fix,
                         },
                 },
+            [0x11] =
+                {
+                    .name = "ORA ind. indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            ora_indexed_read_maybe_finish,
+                            ora_indexed_reread_fixed,
+                        },
+                },
+            [0x15] =
+                {
+                    .name = "ORA zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            ora_addr,
+                        },
+                },
             [0x16] =
                 {
                     .name = "ASL zp,X",
@@ -1138,6 +1319,28 @@ const OpDef
                     .micro_ops =
                         {
                             clc_imp,
+                        },
+                },
+            [0x19] =
+                {
+                    .name = "ORA abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            ora_indexed_read_maybe_finish,
+                            ora_indexed_reread_fixed,
+                        },
+                },
+            [0x1D] =
+                {
+                    .name = "ORA abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            ora_indexed_read_maybe_finish,
+                            ora_indexed_reread_fixed,
                         },
                 },
             [0x1E] =
@@ -1363,6 +1566,27 @@ const OpDef
                             pull_pc_high_finish,
                         },
                 },
+            [0x41] =
+                {
+                    .name = "EOR indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            eor_addr,
+                        },
+                },
+            [0x45] =
+                {
+                    .name = "EOR zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            eor_addr,
+                        },
+                },
             [0x46] =
                 {
                     .name = "LSR zp",
@@ -1408,6 +1632,16 @@ const OpDef
                             jmp_abs_finish,
                         },
                 },
+            [0x4D] =
+                {
+                    .name = "EOR abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            eor_addr,
+                        },
+                },
             [0x4E] =
                 {
                     .name = "LSR abs",
@@ -1430,6 +1664,28 @@ const OpDef
                             branch_page_fix,
                         },
                 },
+            [0x51] =
+                {
+                    .name = "EOR ind. indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            eor_indexed_read_maybe_finish,
+                            eor_indexed_reread_fixed,
+                        },
+                },
+            [0x55] =
+                {
+                    .name = "EOR zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            eor_addr,
+                        },
+                },
             [0x56] =
                 {
                     .name = "LSR zp,X",
@@ -1448,6 +1704,28 @@ const OpDef
                     .micro_ops =
                         {
                             cli_imp,
+                        },
+                },
+            [0x59] =
+                {
+                    .name = "EOR abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            eor_indexed_read_maybe_finish,
+                            eor_indexed_reread_fixed,
+                        },
+                },
+            [0x5D] =
+                {
+                    .name = "EOR abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            eor_indexed_read_maybe_finish,
+                            eor_indexed_reread_fixed,
                         },
                 },
             [0x5E] =
@@ -1473,6 +1751,27 @@ const OpDef
                             pull_pc_low,
                             pull_pc_high_no_inc,
                             rts_finish,
+                        },
+                },
+            [0x61] =
+                {
+                    .name = "ADC indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            adc_addr,
+                        },
+                },
+            [0x65] =
+                {
+                    .name = "ADC zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            adc_addr,
                         },
                 },
             [0x66] =
@@ -1523,6 +1822,16 @@ const OpDef
                             jmp_ind,
                         },
                 },
+            [0x6D] =
+                {
+                    .name = "ADC abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            adc_addr,
+                        },
+                },
             [0x6E] =
                 {
                     .name = "ROR abs",
@@ -1545,6 +1854,28 @@ const OpDef
                             branch_page_fix,
                         },
                 },
+            [0x71] =
+                {
+                    .name = "ADC ind. indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            adc_indexed_read_maybe_finish,
+                            adc_indexed_reread_fixed,
+                        },
+                },
+            [0x75] =
+                {
+                    .name = "ADC zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            adc_addr,
+                        },
+                },
             [0x76] =
                 {
                     .name = "ROR zp,X",
@@ -1563,6 +1894,28 @@ const OpDef
                     .micro_ops =
                         {
                             sei_imp,
+                        },
+                },
+            [0x79] =
+                {
+                    .name = "ADC abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            adc_indexed_read_maybe_finish,
+                            adc_indexed_reread_fixed,
+                        },
+                },
+            [0x7D] =
+                {
+                    .name = "ADC abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            adc_indexed_read_maybe_finish,
+                            adc_indexed_reread_fixed,
                         },
                 },
             [0x7E] =
@@ -2174,6 +2527,18 @@ const OpDef
                             cpx_imm,
                         },
                 },
+            [0xE1] =
+                {
+                    .name = "SBC indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            sbc_addr,
+                        },
+                },
             [0xE4] =
                 {
                     .name = "CPX zp",
@@ -2181,6 +2546,15 @@ const OpDef
                         {
                             read_pc_addr_low,
                             cpx_addr,
+                        },
+                },
+            [0xE5] =
+                {
+                    .name = "SBC zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            sbc_addr,
                         },
                 },
             [0xE6] =
@@ -2202,6 +2576,14 @@ const OpDef
                             inx_imp,
                         },
                 },
+            [0xE9] =
+                {
+                    .name = "SBC imm",
+                    .micro_ops =
+                        {
+                            sbc_imm,
+                        },
+                },
             [0xEA] =
                 {
                     .name = "NOP",
@@ -2218,6 +2600,16 @@ const OpDef
                             read_pc_addr_low,
                             read_pc_addr_high,
                             cpx_addr,
+                        },
+                },
+            [0xED] =
+                {
+                    .name = "SBC abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            sbc_addr,
                         },
                 },
             [0xEE] =
@@ -2242,6 +2634,28 @@ const OpDef
                             branch_page_fix,
                         },
                 },
+            [0xF1] =
+                {
+                    .name = "SBC ind. indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            sbc_indexed_read_maybe_finish,
+                            sbc_indexed_reread_fixed,
+                        },
+                },
+            [0xF5] =
+                {
+                    .name = "SBC zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            sbc_addr,
+                        },
+                },
             [0xF6] =
                 {
                     .name = "INC zp,X",
@@ -2260,6 +2674,28 @@ const OpDef
                     .micro_ops =
                         {
                             sed_imp,
+                        },
+                },
+            [0xF9] =
+                {
+                    .name = "SBC abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            sbc_indexed_read_maybe_finish,
+                            sbc_indexed_reread_fixed,
+                        },
+                },
+            [0xFD] =
+                {
+                    .name = "SBC abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            sbc_indexed_read_maybe_finish,
+                            sbc_indexed_reread_fixed,
                         },
                 },
             [0xFE] =
