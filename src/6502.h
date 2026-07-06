@@ -14,6 +14,9 @@ typedef struct OpState {
   int8_t offset;
   uint16_t old_pc;
   uint16_t ptr;
+  bool page_crossed;
+  uint16_t addr;
+  uint16_t temp_addr;
 } OpState;
 
 struct CPU6502 {
