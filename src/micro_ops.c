@@ -414,6 +414,45 @@ void plp_imp(CPU6502* cpu) {
 /**
  * Logical
  */
+void alu_and(CPU6502* cpu, uint8_t value) {
+  cpu->A &= value;
+  set_nz(cpu, cpu->A);
+}
+
+void and_imm(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+
+  alu_and(cpu, value);
+
+  finish_op(cpu);
+}
+
+void and_addr(CPU6502* cpu) {
+  uint8_t value = cpu->read(cpu->ctx, full_addr(cpu));
+
+  alu_and(cpu, value);
+
+  finish_op(cpu);
+}
+
+void and_indexed_read_maybe_finish(CPU6502* cpu) {
+  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
+  uint8_t value = read(cpu, addr);
+
+  if (!cpu->op.page_crossed) {
+    alu_and(cpu, value);
+    finish_op(cpu);
+  }
+}
+
+void and_indexed_reread_fixed(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->op.addr);
+
+  alu_and(cpu, value);
+
+  finish_op(cpu);
+}
+
 void eor_imm(CPU6502* cpu) {
   uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
   cpu->A ^= value;
@@ -988,1167 +1027,1252 @@ const OpDef reset_sequence = {.name = "RESET",
                                   read_reset_high_finish,
                               }};
 
-const OpDef instruction_defs[256] = {
-    [0x00] =
-        {
-            .name = "BRK",
-            .micro_ops =
-                {
-                    dummy_pc_read_and_inc,
-                    push_pc_high,
-                    push_pc_low,
-                    push_p_with_break,
-                    read_irq_low,
-                    read_irq_high_finish,
-                },
-        },
-    [0x05] =
-        {
-            .name = "ORA zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    ora_addr,
-                },
-        },
-    [0x06] =
-        {
-            .name = "ASL zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_addr_data,
-                    asl_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x08] =
-        {
-            .name = "PHP",
-            .micro_ops =
-                {
-                    dummy_pc_read,
-                    php_imp,
-                },
-        },
-    [0x09] =
-        {
-            .name = "ORA imm.",
-            .micro_ops =
-                {
-                    ora_imm,
-                },
-        },
-    [0x0A] =
-        {
-            .name = "ASL acc.",
-            .micro_ops =
-                {
-                    asl_acc,
-                },
-        },
-    [0x0D] =
-        {
-            .name = "ORA abs.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    ora_addr,
-                },
-        },
-    [0x0E] =
-        {
-            .name = "ASL abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    read_addr_data,
-                    asl_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x10] =
-        {
-            .name = "BPL",
-            .micro_ops =
-                {
-                    bpl_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0x16] =
-        {
-            .name = "ASL zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    read_addr_data,
-                    asl_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x18] =
-        {
-            .name = "CLC",
-            .micro_ops =
-                {
-                    clc_imp,
-                },
-        },
-    [0x1E] =
-        {
-            .name = "ASL abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    dummy_temp_addr_read,
-                    read_addr_data,
-                    asl_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x20] =
-        {
-            .name = "JSR abs.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    dummy_stack_read,
-                    push_pc_high,
-                    push_pc_low,
-                    jsr_abs,
-                },
-        },
-    [0x24] =
-        {
-            .name = "BIT zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    bit_addr,
-                },
-        },
-    [0x26] =
-        {
-            .name = "ROL zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_addr_data,
-                    rol_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x28] =
-        {
-            .name = "PLP",
-            .micro_ops =
-                {
-                    dummy_pc_read,
-                    inc_sp,
-                    plp_imp,
-                },
-        },
-    [0x2A] =
-        {
-            .name = "ROL acc.",
-            .micro_ops =
-                {
-                    rol_acc,
-                },
-        },
-    [0x2C] =
-        {
-            .name = "BIT abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    bit_addr,
-                },
-        },
-    [0x2E] =
-        {
-            .name = "ROL abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    read_addr_data,
-                    rol_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x30] =
-        {
-            .name = "BMI",
-            .micro_ops =
-                {
-                    bmi_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0x36] =
-        {
-            .name = "ROL zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    read_addr_data,
-                    rol_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x38] =
-        {
-            .name = "SEC",
-            .micro_ops =
-                {
-                    sec_imp,
-                },
-        },
-    [0x3E] =
-        {
-            .name = "ROL abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    dummy_temp_addr_read,
-                    read_addr_data,
-                    rol_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x40] =
-        {
-            .name = "RTI",
-            .micro_ops =
-                {
-                    dummy_pc_read_and_inc,
-                    inc_sp,
-                    pull_p,
-                    pull_pc_low,
-                    pull_pc_high_finish,
-                },
-        },
-    [0x46] =
-        {
-            .name = "LSR zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_addr_data,
-                    lsr_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x48] =
-        {
-            .name = "PHA",
-            .micro_ops =
-                {
-                    dummy_pc_read,
-                    pha_imp,
-                },
-        },
-    [0x49] =
-        {
-            .name = "EOR imm.",
-            .micro_ops =
-                {
-                    eor_imm,
-                },
-        },
-    [0x4A] =
-        {
-            .name = "LSR acc.",
-            .micro_ops =
-                {
-                    lsr_acc,
-                },
-        },
-    [0x4C] =
-        {
-            .name = "JMP $%04X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    jmp_abs_finish,
-                },
-        },
-    [0x4E] =
-        {
-            .name = "LSR abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    read_addr_data,
-                    lsr_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x50] =
-        {
-            .name = "BVC",
-            .micro_ops =
-                {
-                    bvc_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0x56] =
-        {
-            .name = "LSR zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    read_addr_data,
-                    lsr_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x58] =
-        {
-            .name = "CLI",
-            .micro_ops =
-                {
-                    cli_imp,
-                },
-        },
-    [0x5E] =
-        {
-            .name = "LSR abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    dummy_temp_addr_read,
-                    read_addr_data,
-                    lsr_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x60] =
-        {
-            .name = "RTS",
-            .micro_ops =
-                {
-                    dummy_pc_read,
-                    inc_sp,
-                    pull_pc_low,
-                    pull_pc_high_no_inc,
-                    rts_finish,
-                },
-        },
-    [0x66] =
-        {
-            .name = "ROR zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_addr_data,
-                    ror_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x68] =
-        {
-            .name = "PLA",
-            .micro_ops =
-                {
-                    dummy_pc_read,
-                    inc_sp,
-                    pla_imp,
-                },
-        },
-    [0x69] =
-        {
-            .name = "ADC imm.",
-            .micro_ops =
-                {
-                    adc_imm,
-                },
-        },
-    [0x6A] =
-        {
-            .name = "ROR acc.",
-            .micro_ops =
-                {
-                    ror_acc,
-                },
-        },
-    [0x6C] =
-        {
-            .name = "JMP indirect",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    fetch_pointer_addr_low,
-                    jmp_ind,
-                },
-        },
-    [0x6E] =
-        {
-            .name = "ROR abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    read_addr_data,
-                    ror_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x70] =
-        {
-            .name = "BVS",
-            .micro_ops =
-                {
-                    bvs_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0x76] =
-        {
-            .name = "ROR zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    read_addr_data,
-                    ror_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x78] =
-        {
-            .name = "SEI",
-            .micro_ops =
-                {
-                    sei_imp,
-                },
-        },
-    [0x7E] =
-        {
-            .name = "ROR abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    dummy_temp_addr_read,
-                    read_addr_data,
-                    ror_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0x81] =
-        {
-            .name = "STA ind. indexed",
-            .micro_ops =
-                {
-                    fetch_ptr,
-                    read_ptr_add_x,
-                    read_ptr_addr_low,
-                    read_ptr_addr_high,
-                    sta_addr,
-                },
-        },
-    [0x84] =
-        {
-            .name = "STY zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    sty_addr,
-                },
-        },
-    [0x85] =
-        {
-            .name = "STA zp.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    sta_addr,
-                },
-        },
-    [0x86] =
-        {
-            .name = "STX zp.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    stx_addr,
-                },
-        },
-    [0x88] =
-        {
-            .name = "DEY",
-            .micro_ops =
-                {
-                    dey_imp,
-                },
-        },
-    [0x8A] =
-        {
-            .name = "TXA",
-            .micro_ops =
-                {
-                    txa_imp,
-                },
-        },
-    [0x8C] =
-        {
-            .name = "STY abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    sty_addr,
-                },
-        },
-    [0x8D] =
-        {
-            .name = "STA $%04X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    sta_addr,
-                },
-        },
-    [0x8E] =
-        {
-            .name = "STX abs.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    stx_addr,
-                },
-        },
-    [0x90] =
-        {
-            .name = "BCC",
-            .micro_ops =
-                {
-                    bcc_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0x91] =
-        {
-            .name = "STA indirect indexed",
-            .micro_ops =
-                {
-                    fetch_ptr,
-                    read_ptr_addr_low,
-                    read_ptr_addr_high_add_y,
-                    dummy_temp_addr_read,
-                    sta_addr,
-                },
-        },
-    [0x94] =
-        {
-            .name = "STY zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    sty_addr,
-                },
-        },
-    [0x95] =
-        {
-            .name = "STA zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    sta_addr,
-                },
-        },
-    [0x96] =
-        {
-            .name = "STX zp,Y",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_y,
-                    stx_addr,
-                },
-        },
-    [0x98] =
-        {
-            .name = "TYA",
-            .micro_ops =
-                {
-                    tya_imp,
-                },
-        },
-    [0x99] =
-        {
-            .name = "STA abs,Y",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_y,
-                    sta_indexed_read_maybe_finish,
-                    sta_indexed_rewrite_fixed,
-                },
-        },
-    [0x9A] =
-        {
-            .name = "TXS",
-            .micro_ops =
-                {
-                    txs_imp,
-                },
-        },
-    [0x9D] =
-        {
-            .name = "STA abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    sta_indexed_read_maybe_finish,
-                    sta_indexed_rewrite_fixed,
-                },
-        },
-    [0xA0] =
-        {
-            .name = "LDY #$%02X",
-            .micro_ops =
-                {
-                    ldy_imm,
-                },
-        },
-    [0xA1] =
-        {
-            .name = "LDA indexed ind.",
-            .micro_ops =
-                {
-                    fetch_ptr,
-                    read_ptr_add_x,
-                    read_ptr_addr_low,
-                    read_ptr_addr_high,
-                    lda_addr,
-                },
-        },
-    [0xA2] =
-        {
-            .name = "LDX #$%02X",
-            .micro_ops =
-                {
-                    ldx_imm,
-                },
-        },
-    [0xA4] =
-        {
-            .name = "LDY zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    ldy_addr,
-                },
-        },
-    [0xA5] =
-        {
-            .name = "LDA zp.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    lda_addr,
-                },
-        },
-    [0xA6] =
-        {
-            .name = "LDX zp.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    ldx_addr,
-                },
-        },
-    [0xA8] =
-        {
-            .name = "TAY",
-            .micro_ops =
-                {
-                    tay_imp,
-                },
-        },
-    [0xA9] =
-        {
-            .name = "LDA #$%02X",
-            .micro_ops =
-                {
-                    lda_imm,
-                },
-        },
-    [0xAA] =
-        {
-            .name = "TAX",
-            .micro_ops =
-                {
-                    tax_imp,
-                },
-        },
-    [0xAC] =
-        {
-            .name = "LDY abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    ldy_addr,
-                },
-        },
-    [0xAD] =
-        {
-            .name = "LDA $%04X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    lda_addr,
-                },
-        },
-    [0xAE] =
-        {
-            .name = "LDX abs.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    ldx_addr,
-                },
-        },
-    [0xB0] =
-        {
-            .name = "BCS",
-            .micro_ops =
-                {
-                    bcs_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0xB1] =
-        {
-            .name = "LDA ind. indexed",
-            .micro_ops =
-                {
-                    fetch_ptr,
-                    read_ptr_addr_low,
-                    read_ptr_addr_high_add_y,
-                    lda_indexed_read_maybe_finish,
-                    lda_indexed_reread_fixed,
-                },
-        },
-    [0xB4] =
-        {
-            .name = "LDY zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    ldy_addr,
-                },
-        },
-    [0xB5] =
-        {
-            .name = "LDA zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    lda_addr,
-                },
-        },
-    [0xB6] =
-        {
-            .name = "LDX zp,Y",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_y,
-                    ldx_addr,
-                },
-        },
-    [0xB8] =
-        {
-            .name = "CLV",
-            .micro_ops =
-                {
-                    clv_imp,
-                },
-        },
-    [0xB9] =
-        {
-            .name = "LDA abs,Y",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_y,
-                    lda_indexed_read_maybe_finish,
-                    lda_indexed_reread_fixed,
-                },
-        },
-    [0xBA] =
-        {
-            .name = "TSX",
-            .micro_ops =
-                {
-                    tsx_imp,
-                },
-        },
-    [0xBC] =
-        {
-            .name = "LDY abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    ldy_indexed_read_maybe_finish,
-                    ldy_indexed_reread_fixed,
-                },
-        },
-    [0xBD] =
-        {
-            .name = "LDA abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    lda_indexed_read_maybe_finish,
-                    lda_indexed_reread_fixed,
-                },
-        },
-    [0xBE] =
-        {
-            .name = "LDX abs,Y",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_y,
-                    ldx_indexed_read_maybe_finish,
-                    ldx_indexed_reread_fixed,
-                },
-        },
-    [0xC0] =
-        {
-            .name = "CPY imm.",
-            .micro_ops =
-                {
-                    cpy_imm,
-                },
-        },
-    [0xC1] =
-        {
-            .name = "CMP indexed ind.",
-            .micro_ops =
-                {
-                    fetch_ptr,
-                    read_ptr_add_x,
-                    read_ptr_addr_low,
-                    read_ptr_addr_high,
-                    cmp_addr,
-                },
-        },
-    [0xC4] =
-        {
-            .name = "CPY zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    cpy_addr,
-                },
-        },
-    [0xC5] =
-        {
-            .name = "CMP zp.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    cmp_addr,
-                },
-        },
-    [0xC6] =
-        {
-            .name = "DEC zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_addr_data,
-                    dec_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0xC8] =
-        {
-            .name = "INY",
-            .micro_ops =
-                {
-                    iny_imp,
-                },
-        },
-    [0xC9] =
-        {
-            .name = "CMP #$%02X",
-            .micro_ops =
-                {
-                    cmp_imm,
-                },
-        },
-    [0xCA] =
-        {
-            .name = "DEX",
-            .micro_ops =
-                {
-                    dex_imp,
-                },
-        },
-    [0xCC] =
-        {
-            .name = "CPY abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    cpy_addr,
-                },
-        },
-    [0xCD] =
-        {
-            .name = "CMP abs.",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    cmp_addr,
-                },
-        },
-    [0xCE] =
-        {
-            .name = "DEC abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    read_addr_data,
-                    dec_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0xD0] =
-        {
-            .name = "BNE",
-            .micro_ops =
-                {
-                    bne_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0xD1] =
-        {
-            .name = "CMP ind. indexed",
-            .micro_ops =
-                {
-                    fetch_ptr,
-                    read_ptr_addr_low,
-                    read_ptr_addr_high_add_y,
-                    cmp_indexed_read_maybe_finish,
-                    cmp_indexed_reread_fixed,
-                },
-        },
-    [0xD5] =
-        {
-            .name = "CMP zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    cmp_addr,
-                },
-        },
-    [0xD6] =
-        {
-            .name = "DEC zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    read_addr_data,
-                    dec_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0xD8] =
-        {
-            .name = "CLD",
-            .micro_ops =
-                {
-                    cld_imp,
-                },
-        },
-    [0xD9] =
-        {
-            .name = "CMP abs,Y",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_y,
-                    cmp_indexed_read_maybe_finish,
-                    cmp_indexed_reread_fixed,
-                },
-        },
-    [0xDD] =
-        {
-            .name = "CMP abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    cmp_indexed_read_maybe_finish,
-                    cmp_indexed_reread_fixed,
-                },
-        },
-    [0xDE] =
-        {
-            .name = "DEC abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    dummy_temp_addr_read,
-                    read_addr_data,
-                    dec_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0xE0] =
-        {
-            .name = "CPX imm.",
-            .micro_ops =
-                {
-                    cpx_imm,
-                },
-        },
-    [0xE4] =
-        {
-            .name = "CPX zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    cpx_addr,
-                },
-        },
-    [0xE6] =
-        {
-            .name = "INC zp",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_addr_data,
-                    inc_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0xE8] =
-        {
-            .name = "INX",
-            .micro_ops =
-                {
-                    inx_imp,
-                },
-        },
-    [0xEA] =
-        {
-            .name = "NOP",
-            .micro_ops =
-                {
-                    nop_imp,
-                },
-        },
-    [0xEC] =
-        {
-            .name = "CPX abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    cpx_addr,
-                },
-        },
-    [0xEE] =
-        {
-            .name = "INC abs",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high,
-                    read_addr_data,
-                    inc_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0xF0] =
-        {
-            .name = "BEQ",
-            .micro_ops =
-                {
-                    beq_fetch_offset,
-                    branch_op,
-                    branch_page_fix,
-                },
-        },
-    [0xF6] =
-        {
-            .name = "INC zp,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_low_add_x,
-                    read_addr_data,
-                    inc_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
-    [0xF8] =
-        {
-            .name = "SED",
-            .micro_ops =
-                {
-                    sed_imp,
+const OpDef
+    instruction_defs[256] =
+        {
+            [0x00] =
+                {
+                    .name = "BRK",
+                    .micro_ops =
+                        {
+                            dummy_pc_read_and_inc,
+                            push_pc_high,
+                            push_pc_low,
+                            push_p_with_break,
+                            read_irq_low,
+                            read_irq_high_finish,
+                        },
+                },
+            [0x05] =
+                {
+                    .name = "ORA zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            ora_addr,
+                        },
+                },
+            [0x06] =
+                {
+                    .name = "ASL zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            asl_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x08] =
+                {
+                    .name = "PHP",
+                    .micro_ops =
+                        {
+                            dummy_pc_read,
+                            php_imp,
+                        },
+                },
+            [0x09] =
+                {
+                    .name = "ORA imm.",
+                    .micro_ops =
+                        {
+                            ora_imm,
+                        },
+                },
+            [0x0A] =
+                {
+                    .name = "ASL acc.",
+                    .micro_ops =
+                        {
+                            asl_acc,
+                        },
+                },
+            [0x0D] =
+                {
+                    .name = "ORA abs.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            ora_addr,
+                        },
+                },
+            [0x0E] =
+                {
+                    .name = "ASL abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            asl_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x10] =
+                {
+                    .name = "BPL",
+                    .micro_ops =
+                        {
+                            bpl_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0x16] =
+                {
+                    .name = "ASL zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            asl_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x18] =
+                {
+                    .name = "CLC",
+                    .micro_ops =
+                        {
+                            clc_imp,
+                        },
+                },
+            [0x1E] =
+                {
+                    .name = "ASL abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            dummy_temp_addr_read,
+                            read_addr_data,
+                            asl_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x20] =
+                {
+                    .name = "JSR abs.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            dummy_stack_read,
+                            push_pc_high,
+                            push_pc_low,
+                            jsr_abs,
+                        },
+                },
+            [0x21] =
+                {
+                    .name = "AND indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            and_addr,
+                        },
+                },
+            [0x24] =
+                {
+                    .name = "BIT zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            bit_addr,
+                        },
+                },
+            [0x25] =
+                {
+                    .name = "AND zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            and_addr,
+                        },
+                },
+            [0x26] =
+                {
+                    .name = "ROL zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            rol_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x28] =
+                {
+                    .name = "PLP",
+                    .micro_ops =
+                        {
+                            dummy_pc_read,
+                            inc_sp,
+                            plp_imp,
+                        },
+                },
+            [0x29] =
+                {
+                    .name = "AND imm",
+                    .micro_ops =
+                        {
+                            and_imm,
+                        },
+                },
+            [0x2A] =
+                {
+                    .name = "ROL acc.",
+                    .micro_ops =
+                        {
+                            rol_acc,
+                        },
+                },
+            [0x2C] =
+                {
+                    .name = "BIT abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            bit_addr,
+                        },
+                },
+            [0x2D] =
+                {
+                    .name = "AND abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            and_addr,
+                        },
+                },
+            [0x2E] =
+                {
+                    .name = "ROL abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            rol_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x30] =
+                {
+                    .name = "BMI",
+                    .micro_ops =
+                        {
+                            bmi_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0x31] =
+                {
+                    .name = "AND ind. indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            and_indexed_read_maybe_finish,
+                            and_indexed_reread_fixed,
+                        },
+                },
+            [0x35] =
+                {
+                    .name = "AND zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            and_addr,
+                        },
+                },
+            [0x36] =
+                {
+                    .name = "ROL zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            rol_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x38] =
+                {
+                    .name = "SEC",
+                    .micro_ops =
+                        {
+                            sec_imp,
+                        },
+                },
+            [0x39] =
+                {
+                    .name = "AND abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            and_indexed_read_maybe_finish,
+                            and_indexed_reread_fixed,
+                        },
+                },
+            [0x3D] =
+                {
+                    .name = "AND abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            and_indexed_read_maybe_finish,
+                            and_indexed_reread_fixed,
+                        },
+                },
+            [0x3E] =
+                {
+                    .name = "ROL abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            dummy_temp_addr_read,
+                            read_addr_data,
+                            rol_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x40] =
+                {
+                    .name = "RTI",
+                    .micro_ops =
+                        {
+                            dummy_pc_read_and_inc,
+                            inc_sp,
+                            pull_p,
+                            pull_pc_low,
+                            pull_pc_high_finish,
+                        },
+                },
+            [0x46] =
+                {
+                    .name = "LSR zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            lsr_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x48] =
+                {
+                    .name = "PHA",
+                    .micro_ops =
+                        {
+                            dummy_pc_read,
+                            pha_imp,
+                        },
+                },
+            [0x49] =
+                {
+                    .name = "EOR imm.",
+                    .micro_ops =
+                        {
+                            eor_imm,
+                        },
+                },
+            [0x4A] =
+                {
+                    .name = "LSR acc.",
+                    .micro_ops =
+                        {
+                            lsr_acc,
+                        },
+                },
+            [0x4C] =
+                {
+                    .name = "JMP $%04X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            jmp_abs_finish,
+                        },
+                },
+            [0x4E] =
+                {
+                    .name = "LSR abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            lsr_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x50] =
+                {
+                    .name = "BVC",
+                    .micro_ops =
+                        {
+                            bvc_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0x56] =
+                {
+                    .name = "LSR zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            lsr_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x58] =
+                {
+                    .name = "CLI",
+                    .micro_ops =
+                        {
+                            cli_imp,
+                        },
+                },
+            [0x5E] =
+                {
+                    .name = "LSR abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            dummy_temp_addr_read,
+                            read_addr_data,
+                            lsr_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x60] =
+                {
+                    .name = "RTS",
+                    .micro_ops =
+                        {
+                            dummy_pc_read,
+                            inc_sp,
+                            pull_pc_low,
+                            pull_pc_high_no_inc,
+                            rts_finish,
+                        },
+                },
+            [0x66] =
+                {
+                    .name = "ROR zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            ror_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x68] =
+                {
+                    .name = "PLA",
+                    .micro_ops =
+                        {
+                            dummy_pc_read,
+                            inc_sp,
+                            pla_imp,
+                        },
+                },
+            [0x69] =
+                {
+                    .name = "ADC imm.",
+                    .micro_ops =
+                        {
+                            adc_imm,
+                        },
+                },
+            [0x6A] =
+                {
+                    .name = "ROR acc.",
+                    .micro_ops =
+                        {
+                            ror_acc,
+                        },
+                },
+            [0x6C] =
+                {
+                    .name = "JMP indirect",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            fetch_pointer_addr_low,
+                            jmp_ind,
+                        },
+                },
+            [0x6E] =
+                {
+                    .name = "ROR abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            ror_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x70] =
+                {
+                    .name = "BVS",
+                    .micro_ops =
+                        {
+                            bvs_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0x76] =
+                {
+                    .name = "ROR zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            ror_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x78] =
+                {
+                    .name = "SEI",
+                    .micro_ops =
+                        {
+                            sei_imp,
+                        },
+                },
+            [0x7E] =
+                {
+                    .name = "ROR abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            dummy_temp_addr_read,
+                            read_addr_data,
+                            ror_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x81] =
+                {
+                    .name = "STA indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            sta_addr,
+                        },
+                },
+            [0x84] =
+                {
+                    .name = "STY zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            sty_addr,
+                        },
+                },
+            [0x85] =
+                {
+                    .name = "STA zp.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            sta_addr,
+                        },
+                },
+            [0x86] =
+                {
+                    .name = "STX zp.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            stx_addr,
+                        },
+                },
+            [0x88] =
+                {
+                    .name = "DEY",
+                    .micro_ops =
+                        {
+                            dey_imp,
+                        },
+                },
+            [0x8A] =
+                {
+                    .name = "TXA",
+                    .micro_ops =
+                        {
+                            txa_imp,
+                        },
+                },
+            [0x8C] =
+                {
+                    .name = "STY abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            sty_addr,
+                        },
+                },
+            [0x8D] =
+                {
+                    .name = "STA $%04X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            sta_addr,
+                        },
+                },
+            [0x8E] =
+                {
+                    .name = "STX abs.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            stx_addr,
+                        },
+                },
+            [0x90] =
+                {
+                    .name = "BCC",
+                    .micro_ops =
+                        {
+                            bcc_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0x91] =
+                {
+                    .name = "STA indirect indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            dummy_temp_addr_read,
+                            sta_addr,
+                        },
+                },
+            [0x94] =
+                {
+                    .name = "STY zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            sty_addr,
+                        },
+                },
+            [0x95] =
+                {
+                    .name = "STA zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            sta_addr,
+                        },
+                },
+            [0x96] =
+                {
+                    .name = "STX zp,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_y,
+                            stx_addr,
+                        },
+                },
+            [0x98] =
+                {
+                    .name = "TYA",
+                    .micro_ops =
+                        {
+                            tya_imp,
+                        },
+                },
+            [0x99] =
+                {
+                    .name = "STA abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            sta_indexed_read_maybe_finish,
+                            sta_indexed_rewrite_fixed,
+                        },
+                },
+            [0x9A] =
+                {
+                    .name = "TXS",
+                    .micro_ops =
+                        {
+                            txs_imp,
+                        },
+                },
+            [0x9D] =
+                {
+                    .name = "STA abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            sta_indexed_read_maybe_finish,
+                            sta_indexed_rewrite_fixed,
+                        },
+                },
+            [0xA0] =
+                {
+                    .name = "LDY #$%02X",
+                    .micro_ops =
+                        {
+                            ldy_imm,
+                        },
+                },
+            [0xA1] =
+                {
+                    .name = "LDA indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            lda_addr,
+                        },
+                },
+            [0xA2] =
+                {
+                    .name = "LDX #$%02X",
+                    .micro_ops =
+                        {
+                            ldx_imm,
+                        },
+                },
+            [0xA4] =
+                {
+                    .name = "LDY zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            ldy_addr,
+                        },
+                },
+            [0xA5] =
+                {
+                    .name = "LDA zp.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            lda_addr,
+                        },
+                },
+            [0xA6] =
+                {
+                    .name = "LDX zp.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            ldx_addr,
+                        },
+                },
+            [0xA8] =
+                {
+                    .name = "TAY",
+                    .micro_ops =
+                        {
+                            tay_imp,
+                        },
+                },
+            [0xA9] =
+                {
+                    .name = "LDA #$%02X",
+                    .micro_ops =
+                        {
+                            lda_imm,
+                        },
+                },
+            [0xAA] =
+                {
+                    .name = "TAX",
+                    .micro_ops =
+                        {
+                            tax_imp,
+                        },
+                },
+            [0xAC] =
+                {
+                    .name = "LDY abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            ldy_addr,
+                        },
+                },
+            [0xAD] =
+                {
+                    .name = "LDA $%04X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            lda_addr,
+                        },
+                },
+            [0xAE] =
+                {
+                    .name = "LDX abs.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            ldx_addr,
+                        },
+                },
+            [0xB0] =
+                {
+                    .name = "BCS",
+                    .micro_ops =
+                        {
+                            bcs_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0xB1] =
+                {
+                    .name = "LDA ind. indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            lda_indexed_read_maybe_finish,
+                            lda_indexed_reread_fixed,
+                        },
+                },
+            [0xB4] =
+                {
+                    .name = "LDY zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            ldy_addr,
+                        },
+                },
+            [0xB5] =
+                {
+                    .name = "LDA zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            lda_addr,
+                        },
+                },
+            [0xB6] =
+                {
+                    .name = "LDX zp,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_y,
+                            ldx_addr,
+                        },
+                },
+            [0xB8] =
+                {
+                    .name = "CLV",
+                    .micro_ops =
+                        {
+                            clv_imp,
+                        },
+                },
+            [0xB9] =
+                {
+                    .name = "LDA abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            lda_indexed_read_maybe_finish,
+                            lda_indexed_reread_fixed,
+                        },
+                },
+            [0xBA] =
+                {
+                    .name = "TSX",
+                    .micro_ops =
+                        {
+                            tsx_imp,
+                        },
+                },
+            [0xBC] =
+                {
+                    .name = "LDY abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            ldy_indexed_read_maybe_finish,
+                            ldy_indexed_reread_fixed,
+                        },
+                },
+            [0xBD] =
+                {
+                    .name = "LDA abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            lda_indexed_read_maybe_finish,
+                            lda_indexed_reread_fixed,
+                        },
+                },
+            [0xBE] =
+                {
+                    .name = "LDX abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            ldx_indexed_read_maybe_finish,
+                            ldx_indexed_reread_fixed,
+                        },
+                },
+            [0xC0] =
+                {
+                    .name = "CPY imm.",
+                    .micro_ops =
+                        {
+                            cpy_imm,
+                        },
+                },
+            [0xC1] =
+                {
+                    .name = "CMP indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            cmp_addr,
+                        },
+                },
+            [0xC4] =
+                {
+                    .name = "CPY zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            cpy_addr,
+                        },
+                },
+            [0xC5] =
+                {
+                    .name = "CMP zp.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            cmp_addr,
+                        },
+                },
+            [0xC6] =
+                {
+                    .name = "DEC zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            dec_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xC8] =
+                {
+                    .name = "INY",
+                    .micro_ops =
+                        {
+                            iny_imp,
+                        },
+                },
+            [0xC9] =
+                {
+                    .name = "CMP #$%02X",
+                    .micro_ops =
+                        {
+                            cmp_imm,
+                        },
+                },
+            [0xCA] =
+                {
+                    .name = "DEX",
+                    .micro_ops =
+                        {
+                            dex_imp,
+                        },
+                },
+            [0xCC] =
+                {
+                    .name = "CPY abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            cpy_addr,
+                        },
+                },
+            [0xCD] =
+                {
+                    .name = "CMP abs.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            cmp_addr,
+                        },
+                },
+            [0xCE] =
+                {
+                    .name = "DEC abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            dec_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xD0] =
+                {
+                    .name = "BNE",
+                    .micro_ops =
+                        {
+                            bne_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0xD1] =
+                {
+                    .name = "CMP ind. indexed",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high_add_y,
+                            cmp_indexed_read_maybe_finish,
+                            cmp_indexed_reread_fixed,
+                        },
+                },
+            [0xD5] =
+                {
+                    .name = "CMP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            cmp_addr,
+                        },
+                },
+            [0xD6] =
+                {
+                    .name = "DEC zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            dec_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xD8] =
+                {
+                    .name = "CLD",
+                    .micro_ops =
+                        {
+                            cld_imp,
+                        },
+                },
+            [0xD9] =
+                {
+                    .name = "CMP abs,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_y,
+                            cmp_indexed_read_maybe_finish,
+                            cmp_indexed_reread_fixed,
+                        },
+                },
+            [0xDD] =
+                {
+                    .name = "CMP abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            cmp_indexed_read_maybe_finish,
+                            cmp_indexed_reread_fixed,
+                        },
+                },
+            [0xDE] =
+                {
+                    .name = "DEC abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            dummy_temp_addr_read,
+                            read_addr_data,
+                            dec_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xE0] =
+                {
+                    .name = "CPX imm.",
+                    .micro_ops =
+                        {
+                            cpx_imm,
+                        },
+                },
+            [0xE4] =
+                {
+                    .name = "CPX zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            cpx_addr,
+                        },
+                },
+            [0xE6] =
+                {
+                    .name = "INC zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            inc_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xE8] =
+                {
+                    .name = "INX",
+                    .micro_ops =
+                        {
+                            inx_imp,
+                        },
+                },
+            [0xEA] =
+                {
+                    .name = "NOP",
+                    .micro_ops =
+                        {
+                            nop_imp,
+                        },
+                },
+            [0xEC] =
+                {
+                    .name = "CPX abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            cpx_addr,
+                        },
+                },
+            [0xEE] =
+                {
+                    .name = "INC abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            inc_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xF0] =
+                {
+                    .name = "BEQ",
+                    .micro_ops =
+                        {
+                            beq_fetch_offset,
+                            branch_op,
+                            branch_page_fix,
+                        },
+                },
+            [0xF6] =
+                {
+                    .name = "INC zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            inc_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xF8] =
+                {
+                    .name = "SED",
+                    .micro_ops =
+                        {
+                            sed_imp,
+                        },
+                },
+            [0xFE] =
+                {
+                    .name = "INC abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            dummy_temp_addr_read,
+                            read_addr_data,
+                            inc_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
                 },
-        },
-    [0xFE] =
-        {
-            .name = "INC abs,X",
-            .micro_ops =
-                {
-                    read_pc_addr_low,
-                    read_pc_addr_high_add_x,
-                    dummy_temp_addr_read,
-                    read_addr_data,
-                    inc_dummy_write_and_compute,
-                    write_data_and_finish,
-                },
-        },
 };
