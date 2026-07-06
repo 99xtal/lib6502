@@ -5,10 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "addressing.h"
 #include "flags.h"
 #include "micro_ops.h"
-#include "opcodes.h"
 #include "stack.h"
 #include "vectors.h"
 
@@ -69,26 +67,12 @@ void cpu6502_tick(CPU6502* cpu) {
 }
 
 int cpu6502_step(CPU6502* cpu) {
-  if (cpu->jammed) {
-    return 1;  // burn a cycle
-  }
+  int cycles = 0;
 
-  // read opcode
-  uint8_t opcode_byte = cpu->read(cpu->ctx, cpu->PC++);
-  Opcode opcode = opcode_table_nmos[opcode_byte];
-  AddressingMode addressing_mode = addr_modes[opcode.addr_mode];
-  Instruction instruction = instructions[opcode.instruction];
-
-  Operand op = addressing_mode.address(cpu);
-
-  // execute instruction
-  int extra_cycles = instruction.execute(cpu, op);
-
-  int cycles = opcode.cycles + extra_cycles;
-
-  if (op.page_crossed) {
-    cycles += opcode.page_cross_penalty;
-  }
+  do {
+    cpu6502_tick(cpu);
+    cycles++;
+  } while (cpu->op.def != NULL && !cpu->jammed);
 
   return cycles;
 }

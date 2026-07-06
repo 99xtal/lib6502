@@ -18,8 +18,7 @@ int main(void) {
   TestMachine machine;
   memset(&machine, 0, sizeof(machine));
 
-  if (load_binary(&machine, "build/test/roms/klaus-functional.bin",
-                  LOAD_ADDR) != 0) {
+  if (load_binary(&machine, "test/roms/klaus-functional.bin", LOAD_ADDR) != 0) {
     return 1;
   }
 
@@ -27,7 +26,7 @@ int main(void) {
       cpu6502_create(CPU6502_VARIANT_NMOS, test_read, test_write, &machine);
   cpu6502_reset(cpu);
 
-  for (uint64_t tick = 0; tick < MAX_STEPS; tick++) {
+  for (uint64_t step = 0; step < MAX_STEPS; step++) {
     CPU6502State state = cpu6502_get_state(cpu);
 
     if (state.PC == SUCCESS_PC) {
@@ -35,7 +34,7 @@ int main(void) {
       return 0;
     }
 
-    cpu6502_tick(cpu);
+    cpu6502_step(cpu);
   }
 
   CPU6502State state = cpu6502_get_state(cpu);
