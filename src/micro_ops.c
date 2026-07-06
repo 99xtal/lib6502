@@ -30,7 +30,10 @@ void dummy_stack_read(CPU6502* cpu) { read(cpu, 0x0100 | cpu->SP); }
 
 void dummy_temp_addr_read(CPU6502* cpu) { read(cpu, cpu->op.temp_addr); }
 
-void read_pc_addr_low(CPU6502* cpu) { cpu->op.addr_lo = read(cpu, cpu->PC++); }
+void read_pc_addr_low(CPU6502* cpu) {
+  cpu->op.addr_lo = read(cpu, cpu->PC++);
+  cpu->op.addr = cpu->op.addr_lo;
+}
 
 void read_pc_addr_high(CPU6502* cpu) { cpu->op.addr_hi = read(cpu, cpu->PC++); }
 
@@ -627,6 +630,22 @@ void dey_imp(CPU6502* cpu) {
   cpu->Y--;
   set_nz(cpu, cpu->Y);
   finish_op(cpu);
+}
+
+void inc_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);
+
+  cpu->op.data++;
+
+  set_nz(cpu, cpu->op.data);
+}
+
+void dec_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);
+
+  cpu->op.data--;
+
+  set_nz(cpu, cpu->op.data);
 }
 
 /**
@@ -1869,6 +1888,17 @@ const OpDef instruction_defs[256] = {
                     cmp_addr,
                 },
         },
+    [0xC6] =
+        {
+            .name = "DEC zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_addr_data,
+                    dec_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0xC8] =
         {
             .name = "INY",
@@ -1913,6 +1943,18 @@ const OpDef instruction_defs[256] = {
                     cmp_addr,
                 },
         },
+    [0xCE] =
+        {
+            .name = "DEC abs",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    read_addr_data,
+                    dec_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0xD0] =
         {
             .name = "BNE",
@@ -1945,6 +1987,18 @@ const OpDef instruction_defs[256] = {
                     cmp_addr,
                 },
         },
+    [0xD6] =
+        {
+            .name = "DEC zp,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_low_add_x,
+                    read_addr_data,
+                    dec_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0xD8] =
         {
             .name = "CLD",
@@ -1975,6 +2029,19 @@ const OpDef instruction_defs[256] = {
                     cmp_indexed_reread_fixed,
                 },
         },
+    [0xDE] =
+        {
+            .name = "DEC abs,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high_add_x,
+                    dummy_temp_addr_read,
+                    read_addr_data,
+                    dec_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0xE0] =
         {
             .name = "CPX imm.",
@@ -1990,6 +2057,17 @@ const OpDef instruction_defs[256] = {
                 {
                     read_pc_addr_low,
                     cpx_addr,
+                },
+        },
+    [0xE6] =
+        {
+            .name = "INC zp",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_addr_data,
+                    inc_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
     [0xE8] =
@@ -2018,6 +2096,18 @@ const OpDef instruction_defs[256] = {
                     cpx_addr,
                 },
         },
+    [0xEE] =
+        {
+            .name = "INC abs",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high,
+                    read_addr_data,
+                    inc_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0xF0] =
         {
             .name = "BEQ",
@@ -2028,12 +2118,37 @@ const OpDef instruction_defs[256] = {
                     branch_page_fix,
                 },
         },
+    [0xF6] =
+        {
+            .name = "INC zp,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_low_add_x,
+                    read_addr_data,
+                    inc_dummy_write_and_compute,
+                    write_data_and_finish,
+                },
+        },
     [0xF8] =
         {
             .name = "SED",
             .micro_ops =
                 {
                     sed_imp,
+                },
+        },
+    [0xFE] =
+        {
+            .name = "INC abs,X",
+            .micro_ops =
+                {
+                    read_pc_addr_low,
+                    read_pc_addr_high_add_x,
+                    dummy_temp_addr_read,
+                    read_addr_data,
+                    inc_dummy_write_and_compute,
+                    write_data_and_finish,
                 },
         },
 };
