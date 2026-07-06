@@ -64,7 +64,17 @@ jobs:
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        choco install cc65 -y
+        Invoke-WebRequest `
+          -Uri "https://sourceforge.net/projects/cc65/files/cc65-snapshot-win32.zip/download" `
+          -OutFile "$env:RUNNER_TEMP\cc65.zip"
+
+        Expand-Archive "$env:RUNNER_TEMP\cc65.zip" -DestinationPath "$env:RUNNER_TEMP\cc65"
+
+        $cc65Bin = Get-ChildItem "$env:RUNNER_TEMP\cc65" -Recurse -Directory |
+          Where-Object { $_.Name -eq "bin" } |
+          Select-Object -First 1
+
+        echo $cc65Bin.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
