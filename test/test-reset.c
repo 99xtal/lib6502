@@ -18,16 +18,21 @@ static void bus_write(void* ctx, uint16_t address, uint8_t value) {
 
 int main(void) {
   struct test_bus bus = {0};
-  CPU6502 cpu = {0};
+  CPU6502* cpu =
+      cpu6502_create(CPU6502_VARIANT_NMOS, bus_read, bus_write, &bus);
 
   bus.mem[0xFFFC] = 0x34;
   bus.mem[0xFFFD] = 0x12;
 
-  cpu6502_init(&cpu, CPU6502_VARIANT_STRICT, bus_read, bus_write, &bus);
-  cpu6502_reset(&cpu);
+  cpu6502_reset(cpu);
+  for (int i = 0; i < 7; i++) {
+    cpu6502_tick(cpu);
+  }
 
-  assert(cpu.SP == 0xFD);
-  assert(cpu.PC == 0x1234);
+  CPU6502State state = cpu6502_get_state(cpu);
+
+  assert(state.SP == 0xFD);
+  assert(state.PC == 0x1234);
 
   return 0;
 }

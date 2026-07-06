@@ -1,6 +1,6 @@
 # lib6502
 
-A lightweight MOS 6502 CPU emulation library written in C.
+A MOS 6502 CPU emulation library written in C.
 
 `lib6502` provides a standalone implementation of the 6502 processor, including instruction decoding, addressing modes, registers, flags, and CPU execution. It is designed to be embedded into larger emulators by allowing the host application to provide memory and I/O through read/write callbacks.
 
@@ -11,6 +11,7 @@ A lightweight MOS 6502 CPU emulation library written in C.
 * Optional undocumented NMOS opcodes
 * Decimal mode (BCD) arithmetic support
 * User-defined memory bus via read/write callbacks
+* Cycle-accurate ticking
 * Instruction stepping with cycle counts
 * Optional instruction tracing support
 * Passes the Klaus Dormann 6502 functional test suite
@@ -21,18 +22,14 @@ A lightweight MOS 6502 CPU emulation library written in C.
 
 | Variant                  | Description                                                                                                                                                                                  |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CPU6502_VARIANT_STRICT` | Implements only the documented MOS 6502 instruction set. Illegal/undocumented opcodes are treated as invalid instructions.                                                                   |
 | `CPU6502_VARIANT_NMOS`   | Emulates the original NMOS MOS 6502, including undocumented opcodes and original hardware behavior.                                                                                          |
 | `CPU6502_VARIANT_RP2A03` | Emulates the Ricoh RP2A03 CPU used in the NTSC Nintendo Entertainment System. This variant includes the NMOS undocumented opcodes but disables decimal mode, matching the original hardware. |
 
 The desired variant is selected when initializing the CPU:
 
 ```c
-cpu6502_init(&cpu,
-             CPU6502_VARIANT_RP2A03,
-             memory,
-             read,
-             write);
+CPU6502* cpu =
+    cpu6502_create(CPU6502_VARIANT_NMOS, test_read, test_write, &machine);
 ```
 
 ## Requirements
@@ -137,18 +134,13 @@ void write(void *ctx, uint16_t addr, uint8_t value) {
 int main(void) {
     uint8_t memory[0x10000] = {0};
 
-    CPU6502 cpu;
-
-    cpu6502_init(&cpu,
-                 CPU6502_VARIANT_NMOS,
-                 memory,
-                 read,
-                 write);
+    CPU6502* cpu =
+        cpu6502_create(CPU6502_VARIANT_NMOS, read, write, memory);
 
     cpu6502_reset(&cpu);
 
     while (1) {
-        int cycles = cpu6502_step(&cpu);
+        cpu6502_tick(&cpu);
     }
 }
 ```

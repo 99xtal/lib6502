@@ -1,4 +1,4 @@
-#include <lib6502/6502.h>
+#include "6502.h"
 
 uint16_t read_vector(CPU6502* cpu, uint16_t vector_address) {
   uint8_t low = cpu->read(cpu->ctx, vector_address);

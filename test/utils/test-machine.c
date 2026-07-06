@@ -3,6 +3,14 @@
 #include <stdio.h>
 
 uint8_t test_read(void* ctx, uint16_t addr) {
+  if (addr == 0xFFFC) {
+    return 0x00;
+  }
+
+  if (addr == 0xFFFD) {
+    return 0x04;
+  }
+
   TestMachine* m = ctx;
   return m->mem[addr];
 }
