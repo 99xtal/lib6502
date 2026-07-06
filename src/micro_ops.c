@@ -24,9 +24,42 @@ void dummy_pc_read_and_inc(CPU6502* cpu) { read(cpu, cpu->PC++); }
 
 void dummy_stack_read(CPU6502* cpu) { read(cpu, 0x0100 | cpu->SP); }
 
+void dummy_temp_addr_read(CPU6502* cpu) { read(cpu, cpu->op.temp_addr); }
+
 void read_pc_addr_low(CPU6502* cpu) { cpu->op.addr_lo = read(cpu, cpu->PC++); }
 
 void read_pc_addr_high(CPU6502* cpu) { cpu->op.addr_hi = read(cpu, cpu->PC++); }
+
+void fetch_ptr(CPU6502* cpu) { cpu->op.ptr = read(cpu, cpu->PC++); }
+
+void read_ptr_addr_low(CPU6502* cpu) {
+  cpu->op.addr_lo = read(cpu, cpu->op.ptr);
+}
+
+void read_ptr_addr_high(CPU6502* cpu) {
+  cpu->op.addr_hi = read(cpu, (uint8_t)(cpu->op.ptr + 1));
+  cpu->op.addr = full_addr(cpu);
+}
+
+void read_ptr_add_x(CPU6502* cpu) {
+  read(cpu, cpu->op.ptr);  // dummy read
+  cpu->op.ptr = (uint8_t)(cpu->op.ptr + cpu->X);
+}
+
+void read_ptr_addr_high_add_y(CPU6502* cpu) {
+  cpu->op.addr_hi = read(cpu, (uint8_t)(cpu->op.ptr + 1));
+
+  uint16_t base = full_addr(cpu);
+  uint16_t addr = base + cpu->Y;
+
+  cpu->op.addr = addr;
+  cpu->op.addr_lo = addr & 0xFF;
+  cpu->op.addr_hi = (addr & 0xFF00) >> 8;
+  cpu->op.page_crossed = (base & 0xFF00) != (addr & 0xFF00);
+
+  cpu->op.temp_addr =
+      ((uint16_t)cpu->op.addr_hi << 8) | ((cpu->op.addr_lo + cpu->Y) & 0xFF);
+}
 
 void read_pc_addr_low_add_x(CPU6502* cpu) {
   dummy_read(cpu, cpu->op.addr_lo);
@@ -1015,6 +1048,18 @@ const OpDef instruction_defs[256] = {
                     sei_imp,
                 },
         },
+    [0x81] =
+        {
+            .name = "STA ind. indexed",
+            .micro_ops =
+                {
+                    fetch_ptr,
+                    read_ptr_add_x,
+                    read_ptr_addr_low,
+                    read_ptr_addr_high,
+                    sta_addr,
+                },
+        },
     [0x84] =
         {
             .name = "STY zp",
@@ -1098,6 +1143,18 @@ const OpDef instruction_defs[256] = {
                     branch_page_fix,
                 },
         },
+    [0x91] =
+        {
+            .name = "STA indirect indexed",
+            .micro_ops =
+                {
+                    fetch_ptr,
+                    read_ptr_addr_low,
+                    read_ptr_addr_high_add_y,
+                    dummy_temp_addr_read,
+                    sta_addr,
+                },
+        },
     [0x94] =
         {
             .name = "STY zp,X",
@@ -1166,11 +1223,26 @@ const OpDef instruction_defs[256] = {
                     sta_indexed_rewrite_fixed,
                 },
         },
-    [0xA0] = {.name = "LDY #$%02X",
-              .micro_ops =
-                  {
-                      ldy_imm,
-                  }},
+    [0xA0] =
+        {
+            .name = "LDY #$%02X",
+            .micro_ops =
+                {
+                    ldy_imm,
+                },
+        },
+    [0xA1] =
+        {
+            .name = "LDA indexed ind.",
+            .micro_ops =
+                {
+                    fetch_ptr,
+                    read_ptr_add_x,
+                    read_ptr_addr_low,
+                    read_ptr_addr_high,
+                    lda_addr,
+                },
+        },
     [0xA2] =
         {
             .name = "LDX #$%02X",
@@ -1268,6 +1340,18 @@ const OpDef instruction_defs[256] = {
                     bcs_fetch_offset,
                     branch_op,
                     branch_page_fix,
+                },
+        },
+    [0xB1] =
+        {
+            .name = "LDA ind. indexed",
+            .micro_ops =
+                {
+                    fetch_ptr,
+                    read_ptr_addr_low,
+                    read_ptr_addr_high_add_y,
+                    lda_indexed_read_maybe_finish,
+                    lda_indexed_reread_fixed,
                 },
         },
     [0xB4] =
@@ -1438,6 +1522,18 @@ const OpDef instruction_defs[256] = {
                     bne_fetch_offset,
                     branch_op,
                     branch_page_fix,
+                },
+        },
+    [0xD1] =
+        {
+            .name = "CMP ind. indexed",
+            .micro_ops =
+                {
+                    fetch_ptr,
+                    read_ptr_addr_low,
+                    read_ptr_addr_high_add_y,
+                    cmp_indexed_read_maybe_finish,
+                    cmp_indexed_reread_fixed,
                 },
         },
     [0xD5] =
