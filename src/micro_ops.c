@@ -1167,6 +1167,25 @@ void nop_imp(CPU6502* cpu) {
   finish_op(cpu);
 }
 
+void nop_imm(CPU6502* cpu) {
+  dummy_read(cpu, cpu->PC++);
+  finish_op(cpu);
+}
+
+void nop_addr(CPU6502* cpu) {
+  dummy_read(cpu, full_addr(cpu));
+  finish_op(cpu);
+}
+
+void nop_indexed_read_maybe_finish(CPU6502* cpu) {
+  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
+  uint8_t value = read(cpu, addr);
+
+  if (!cpu->op.page_crossed) {
+    finish_op(cpu);
+  }
+}
+
 void dummy(CPU6502* cpu) { (void)cpu; }
 
 void dec_sp(CPU6502* cpu) { cpu->SP--; }
@@ -1240,6 +1259,15 @@ const OpDef
                             ora_addr,
                         },
                 },
+            [0x04] =
+                {
+                    .name = "*NOP zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            nop_addr,
+                        },
+                },
             [0x05] =
                 {
                     .name = "ORA zp",
@@ -1283,6 +1311,16 @@ const OpDef
                     .micro_ops =
                         {
                             asl_acc,
+                        },
+                },
+            [0x0C] =
+                {
+                    .name = "*NOP abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            nop_addr,
                         },
                 },
             [0x0D] =
@@ -1329,6 +1367,16 @@ const OpDef
                             ora_indexed_reread_fixed,
                         },
                 },
+            [0x14] =
+                {
+                    .name = "*NOP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            nop_addr,
+                        },
+                },
             [0x15] =
                 {
                     .name = "ORA zp,X",
@@ -1368,6 +1416,25 @@ const OpDef
                             read_pc_addr_high_add_y,
                             ora_indexed_read_maybe_finish,
                             ora_indexed_reread_fixed,
+                        },
+                },
+            [0x1A] =
+                {
+                    .name = "*NOP",
+                    .micro_ops =
+                        {
+                            nop_imp,
+                        },
+                },
+            [0x1C] =
+                {
+                    .name = "*NOP abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            nop_indexed_read_maybe_finish,
+                            nop_addr,
                         },
                 },
             [0x1D] =
@@ -1527,6 +1594,16 @@ const OpDef
                             and_indexed_reread_fixed,
                         },
                 },
+            [0x34] =
+                {
+                    .name = "*NOP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            nop_addr,
+                        },
+                },
             [0x35] =
                 {
                     .name = "AND zp,X",
@@ -1566,6 +1643,25 @@ const OpDef
                             read_pc_addr_high_add_y,
                             and_indexed_read_maybe_finish,
                             and_indexed_reread_fixed,
+                        },
+                },
+            [0x3A] =
+                {
+                    .name = "*NOP",
+                    .micro_ops =
+                        {
+                            nop_imp,
+                        },
+                },
+            [0x3C] =
+                {
+                    .name = "*NOP abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            nop_indexed_read_maybe_finish,
+                            nop_addr,
                         },
                 },
             [0x3D] =
@@ -1614,6 +1710,15 @@ const OpDef
                             read_ptr_addr_low,
                             read_ptr_addr_high,
                             eor_addr,
+                        },
+                },
+            [0x44] =
+                {
+                    .name = "*NOP zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            nop_addr,
                         },
                 },
             [0x45] =
@@ -1714,6 +1819,16 @@ const OpDef
                             eor_indexed_reread_fixed,
                         },
                 },
+            [0x54] =
+                {
+                    .name = "*NOP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            nop_addr,
+                        },
+                },
             [0x55] =
                 {
                     .name = "EOR zp,X",
@@ -1753,6 +1868,25 @@ const OpDef
                             read_pc_addr_high_add_y,
                             eor_indexed_read_maybe_finish,
                             eor_indexed_reread_fixed,
+                        },
+                },
+            [0x5A] =
+                {
+                    .name = "*NOP",
+                    .micro_ops =
+                        {
+                            nop_imp,
+                        },
+                },
+            [0x5C] =
+                {
+                    .name = "*NOP abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            nop_indexed_read_maybe_finish,
+                            nop_addr,
                         },
                 },
             [0x5D] =
@@ -1801,6 +1935,15 @@ const OpDef
                             read_ptr_addr_low,
                             read_ptr_addr_high,
                             adc_addr,
+                        },
+                },
+            [0x64] =
+                {
+                    .name = "*NOP zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            nop_addr,
                         },
                 },
             [0x65] =
@@ -1904,6 +2047,16 @@ const OpDef
                             adc_indexed_reread_fixed,
                         },
                 },
+            [0x74] =
+                {
+                    .name = "*NOP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            nop_addr,
+                        },
+                },
             [0x75] =
                 {
                     .name = "ADC zp,X",
@@ -1945,6 +2098,25 @@ const OpDef
                             adc_indexed_reread_fixed,
                         },
                 },
+            [0x7A] =
+                {
+                    .name = "*NOP",
+                    .micro_ops =
+                        {
+                            nop_imp,
+                        },
+                },
+            [0x7C] =
+                {
+                    .name = "*NOP abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            nop_indexed_read_maybe_finish,
+                            nop_addr,
+                        },
+                },
             [0x7D] =
                 {
                     .name = "ADC abs,X",
@@ -1969,6 +2141,14 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x80] =
+                {
+                    .name = "*NOP imm",
+                    .micro_ops =
+                        {
+                            nop_imm,
+                        },
+                },
             [0x81] =
                 {
                     .name = "STA indexed ind.",
@@ -1979,6 +2159,14 @@ const OpDef
                             read_ptr_addr_low,
                             read_ptr_addr_high,
                             sta_addr,
+                        },
+                },
+            [0x82] =
+                {
+                    .name = "*NOP imm",
+                    .micro_ops =
+                        {
+                            nop_imm,
                         },
                 },
             [0x84] =
@@ -2014,6 +2202,14 @@ const OpDef
                     .micro_ops =
                         {
                             dey_imp,
+                        },
+                },
+            [0x89] =
+                {
+                    .name = "*NOP imm",
+                    .micro_ops =
+                        {
+                            nop_imm,
                         },
                 },
             [0x8A] =
@@ -2385,6 +2581,14 @@ const OpDef
                             cmp_addr,
                         },
                 },
+            [0xC2] =
+                {
+                    .name = "*NOP imm",
+                    .micro_ops =
+                        {
+                            nop_imm,
+                        },
+                },
             [0xC4] =
                 {
                     .name = "CPY zp",
@@ -2492,6 +2696,16 @@ const OpDef
                             cmp_indexed_reread_fixed,
                         },
                 },
+            [0xD4] =
+                {
+                    .name = "*NOP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            nop_addr,
+                        },
+                },
             [0xD5] =
                 {
                     .name = "CMP zp,X",
@@ -2531,6 +2745,25 @@ const OpDef
                             read_pc_addr_high_add_y,
                             cmp_indexed_read_maybe_finish,
                             cmp_indexed_reread_fixed,
+                        },
+                },
+            [0xDA] =
+                {
+                    .name = "*NOP",
+                    .micro_ops =
+                        {
+                            nop_imp,
+                        },
+                },
+            [0xDC] =
+                {
+                    .name = "*NOP abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            nop_indexed_read_maybe_finish,
+                            nop_addr,
                         },
                 },
             [0xDD] =
@@ -2575,6 +2808,14 @@ const OpDef
                             read_ptr_addr_low,
                             read_ptr_addr_high,
                             sbc_addr,
+                        },
+                },
+            [0xE2] =
+                {
+                    .name = "*NOP imm",
+                    .micro_ops =
+                        {
+                            nop_imm,
                         },
                 },
             [0xE4] =
@@ -2684,6 +2925,16 @@ const OpDef
                             sbc_indexed_reread_fixed,
                         },
                 },
+            [0xF4] =
+                {
+                    .name = "*NOP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            nop_addr,
+                        },
+                },
             [0xF5] =
                 {
                     .name = "SBC zp,X",
@@ -2723,6 +2974,25 @@ const OpDef
                             read_pc_addr_high_add_y,
                             sbc_indexed_read_maybe_finish,
                             sbc_indexed_reread_fixed,
+                        },
+                },
+            [0xFA] =
+                {
+                    .name = "*NOP",
+                    .micro_ops =
+                        {
+                            nop_imp,
+                        },
+                },
+            [0xFC] =
+                {
+                    .name = "*NOP abs,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high_add_x,
+                            nop_indexed_read_maybe_finish,
+                            nop_addr,
                         },
                 },
             [0xFD] =
