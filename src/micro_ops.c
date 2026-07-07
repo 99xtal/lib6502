@@ -1186,6 +1186,12 @@ void nop_indexed_read_maybe_finish(CPU6502* cpu) {
   }
 }
 
+/**
+ * Undocumented Opcodes
+ */
+
+void kil_imp(CPU6502* cpu) { cpu->jammed = true; }
+
 void dummy(CPU6502* cpu) { (void)cpu; }
 
 void dec_sp(CPU6502* cpu) { cpu->SP--; }
@@ -1257,6 +1263,14 @@ const OpDef
                             read_ptr_addr_low,
                             read_ptr_addr_high,
                             ora_addr,
+                        },
+                },
+            [0x02] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0x04] =
@@ -1365,6 +1379,14 @@ const OpDef
                             read_ptr_addr_high_add_y,
                             ora_indexed_read_maybe_finish,
                             ora_indexed_reread_fixed,
+                        },
+                },
+            [0x12] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0x14] =
@@ -1485,6 +1507,14 @@ const OpDef
                             and_addr,
                         },
                 },
+            [0x22] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
+                        },
+                },
             [0x24] =
                 {
                     .name = "BIT zp",
@@ -1592,6 +1622,14 @@ const OpDef
                             read_ptr_addr_high_add_y,
                             and_indexed_read_maybe_finish,
                             and_indexed_reread_fixed,
+                        },
+                },
+            [0x32] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0x34] =
@@ -1712,6 +1750,14 @@ const OpDef
                             eor_addr,
                         },
                 },
+            [0x42] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
+                        },
+                },
             [0x44] =
                 {
                     .name = "*NOP zp",
@@ -1817,6 +1863,14 @@ const OpDef
                             read_ptr_addr_high_add_y,
                             eor_indexed_read_maybe_finish,
                             eor_indexed_reread_fixed,
+                        },
+                },
+            [0x52] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0x54] =
@@ -1937,6 +1991,14 @@ const OpDef
                             adc_addr,
                         },
                 },
+            [0x62] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
+                        },
+                },
             [0x64] =
                 {
                     .name = "*NOP zp",
@@ -2045,6 +2107,14 @@ const OpDef
                             read_ptr_addr_high_add_y,
                             adc_indexed_read_maybe_finish,
                             adc_indexed_reread_fixed,
+                        },
+                },
+            [0x72] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0x74] =
@@ -2272,6 +2342,14 @@ const OpDef
                             sta_addr,
                         },
                 },
+            [0x92] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
+                        },
+                },
             [0x94] =
                 {
                     .name = "STY zp,X",
@@ -2469,6 +2547,14 @@ const OpDef
                             read_ptr_addr_high_add_y,
                             lda_indexed_read_maybe_finish,
                             lda_indexed_reread_fixed,
+                        },
+                },
+            [0xB2] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0xB4] =
@@ -2694,6 +2780,14 @@ const OpDef
                             read_ptr_addr_high_add_y,
                             cmp_indexed_read_maybe_finish,
                             cmp_indexed_reread_fixed,
+                        },
+                },
+            [0xD2] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0xD4] =
@@ -2923,6 +3017,14 @@ const OpDef
                             read_ptr_addr_high_add_y,
                             sbc_indexed_read_maybe_finish,
                             sbc_indexed_reread_fixed,
+                        },
+                },
+            [0xF2] =
+                {
+                    .name = "*KIL",
+                    .micro_ops =
+                        {
+                            kil_imp,
                         },
                 },
             [0xF4] =
