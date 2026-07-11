@@ -1570,6 +1570,18 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x0F] =
+                {
+                    .name = "*SLO abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            slo_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x10] =
                 {
                     .name = "BPL",
@@ -1844,6 +1856,18 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x2F] =
+                {
+                    .name = "*RLA abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            rla_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x30] =
                 {
                     .name = "BMI",
@@ -2114,6 +2138,18 @@ const OpDef
                             read_pc_addr_high,
                             read_addr_data,
                             lsr_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x4F] =
+                {
+                    .name = "*SRE abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            sre_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
@@ -2392,6 +2428,18 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x6F] =
+                {
+                    .name = "*RRA abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            rra_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x70] =
                 {
                     .name = "BVS",
@@ -2654,6 +2702,16 @@ const OpDef
                             stx_addr,
                         },
                 },
+            [0x8F] =
+                {
+                    .name = "*SAX abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            sax_addr,
+                        },
+                },
             [0x90] =
                 {
                     .name = "BCC",
@@ -2886,6 +2944,16 @@ const OpDef
                             read_pc_addr_low,
                             read_pc_addr_high,
                             ldx_addr,
+                        },
+                },
+            [0xAF] =
+                {
+                    .name = "LAX abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            lax_addr,
                         },
                 },
             [0xB0] =
@@ -3147,6 +3215,18 @@ const OpDef
                             read_pc_addr_high,
                             read_addr_data,
                             dec_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xCF] =
+                {
+                    .name = "*DCP abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            dcp_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
@@ -3415,6 +3495,18 @@ const OpDef
                             read_pc_addr_high,
                             read_addr_data,
                             inc_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xEF] =
+                {
+                    .name = "*ISC abs",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_high,
+                            read_addr_data,
+                            isc_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
