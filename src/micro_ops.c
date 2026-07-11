@@ -1260,6 +1260,17 @@ void lax_imm(CPU6502* cpu) {
   finish_op(cpu);
 }
 
+void lax_addr(CPU6502* cpu) {
+  uint16_t addr = full_addr(cpu);
+  uint8_t value = read(cpu, addr);
+
+  cpu->A = value;
+  cpu->X = value;
+  set_nz(cpu, value);
+
+  finish_op(cpu);
+}
+
 void axs_imm(CPU6502* cpu) {
   uint8_t value = read(cpu, cpu->PC++);
   uint8_t source = cpu->A & cpu->X;
@@ -1272,6 +1283,104 @@ void axs_imm(CPU6502* cpu) {
   set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
 
   finish_op(cpu);
+}
+
+void slo_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);  // old value
+
+  // ASL
+  uint8_t result = cpu->op.data << 1;
+  uint8_t last_bit = (cpu->op.data & 0x80) != 0;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, last_bit);
+  set_nz(cpu, cpu->op.data);
+
+  // ORA
+  alu_ora(cpu, result);
+}
+
+void sre_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);  // old value
+
+  // LSR
+  uint8_t result = cpu->op.data >> 1;
+  uint8_t first_bit = (cpu->op.data & 0x01) != 0;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, first_bit);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, 0);
+
+  // EOR
+  alu_eor(cpu, result);
+}
+
+void rla_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);  // old value
+
+  // ROL
+  uint8_t value = cpu->op.data;
+  uint8_t result = value << 1;
+  uint8_t old_last_bit = (value & 0x80) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, old_last_bit);
+
+  // AND
+  alu_and(cpu, result);
+}
+
+void rra_dummy_write_and_compute(CPU6502* cpu) {
+  // ROR
+  write(cpu, cpu->op.addr, cpu->op.data);  // old value
+
+  uint8_t result = cpu->op.data >> 1;
+  uint8_t old_first_bit = (cpu->op.data & 0x01) != 0;
+  uint8_t carry_bit = get_flag(cpu, FLAG_CARRY);
+
+  result |= carry_bit << 7;
+
+  cpu->op.data = result;
+
+  set_flag(cpu, FLAG_CARRY, old_first_bit);
+  set_nz(cpu, result);
+
+  // ADC
+  alu_adc(cpu, result);
+}
+
+void sax_addr(CPU6502* cpu) {
+  uint16_t addr = full_addr(cpu);
+  cpu->write(cpu->ctx, addr, cpu->A & cpu->X);
+
+  finish_op(cpu);
+}
+
+void dcp_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);
+
+  cpu->op.data--;
+
+  uint8_t result = (uint16_t)cpu->A - cpu->op.data;
+
+  set_flag(cpu, FLAG_CARRY, cpu->A >= cpu->op.data);
+  set_flag(cpu, FLAG_ZERO, cpu->A == cpu->op.data);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+}
+
+void isc_dummy_write_and_compute(CPU6502* cpu) {
+  write(cpu, cpu->op.addr, cpu->op.data);
+
+  cpu->op.data++;
+
+  alu_sbc(cpu, cpu->op.data);
 }
 
 void dummy(CPU6502* cpu) { (void)cpu; }
@@ -1381,6 +1490,17 @@ const OpDef
                             read_pc_addr_low,
                             read_addr_data,
                             asl_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x07] =
+                {
+                    .name = "*SLO zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            slo_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
@@ -1631,6 +1751,17 @@ const OpDef
                             read_pc_addr_low,
                             read_addr_data,
                             rol_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x27] =
+                {
+                    .name = "*RLA zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            rla_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
@@ -1885,6 +2016,17 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x47] =
+                {
+                    .name = "*SRE zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            sre_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x48] =
                 {
                     .name = "PHA",
@@ -2134,6 +2276,17 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x67] =
+                {
+                    .name = "*RRA zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            rra_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x68] =
                 {
                     .name = "PLA",
@@ -2380,6 +2533,15 @@ const OpDef
                             stx_addr,
                         },
                 },
+            [0x87] =
+                {
+                    .name = "*SAX zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            sax_addr,
+                        },
+                },
             [0x88] =
                 {
                     .name = "DEY",
@@ -2593,6 +2755,15 @@ const OpDef
                         {
                             read_pc_addr_low,
                             ldx_addr,
+                        },
+                },
+            [0xA7] =
+                {
+                    .name = "*LAX zp.",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            lax_addr,
                         },
                 },
             [0xA8] =
@@ -2831,6 +3002,17 @@ const OpDef
                             read_pc_addr_low,
                             read_addr_data,
                             dec_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xC7] =
+                {
+                    .name = "*DCP zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            dcp_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
@@ -3076,6 +3258,17 @@ const OpDef
                             read_pc_addr_low,
                             read_addr_data,
                             inc_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xE7] =
+                {
+                    .name = "*ISC zp",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_addr_data,
+                            isc_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
