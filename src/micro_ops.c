@@ -314,23 +314,6 @@ void lda_indexed_reread_fixed(CPU6502* cpu) {
   finish_op(cpu);
 }
 
-void sta_indexed_read_maybe_finish(CPU6502* cpu) {
-  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
-  dummy_read(cpu, addr);
-
-  if (!cpu->op.page_crossed) {
-    cpu->write(cpu->ctx, addr, cpu->A);
-
-    finish_op(cpu);
-  }
-}
-
-void sta_indexed_rewrite_fixed(CPU6502* cpu) {
-  cpu->write(cpu->ctx, cpu->op.addr, cpu->A);
-
-  finish_op(cpu);
-}
-
 void sta_addr(CPU6502* cpu) {
   uint16_t addr = full_addr(cpu);
   cpu->write(cpu->ctx, addr, cpu->A);
@@ -1441,35 +1424,13 @@ void sha_indexed_rewrite_fixed(CPU6502* cpu) {
   finish_op(cpu);
 }
 
-void shx_indexed_read_maybe_finish(CPU6502* cpu) {
-  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
-  dummy_read(cpu, addr);
-
-  if (!cpu->op.page_crossed) {
-    cpu->write(cpu->ctx, addr, cpu->X & cpu->op.addr_hi);
-
-    finish_op(cpu);
-  }
-}
-
-void shx_indexed_rewrite_fixed(CPU6502* cpu) {
+void shx_addr(CPU6502* cpu) {
   cpu->write(cpu->ctx, cpu->op.addr, cpu->X & cpu->op.addr_hi);
 
   finish_op(cpu);
 }
 
-void shy_indexed_read_maybe_finish(CPU6502* cpu) {
-  uint16_t addr = cpu->op.page_crossed ? cpu->op.temp_addr : cpu->op.addr;
-  dummy_read(cpu, addr);
-
-  if (!cpu->op.page_crossed) {
-    cpu->write(cpu->ctx, addr, cpu->Y & cpu->op.addr_hi);
-
-    finish_op(cpu);
-  }
-}
-
-void shy_indexed_rewrite_fixed(CPU6502* cpu) {
+void shy_addr(CPU6502* cpu) {
   cpu->write(cpu->ctx, cpu->op.addr, cpu->Y & cpu->op.addr_hi);
 
   finish_op(cpu);
@@ -3167,8 +3128,8 @@ const OpDef
                         {
                             read_pc_addr_low,
                             read_pc_addr_high_add_y,
-                            sta_indexed_read_maybe_finish,
-                            sta_indexed_rewrite_fixed,
+                            dummy_temp_addr_read,
+                            sta_addr,
                         },
                 },
             [0x9A] =
@@ -3197,8 +3158,8 @@ const OpDef
                         {
                             read_pc_addr_low,
                             read_pc_addr_high_add_x,
-                            shy_indexed_read_maybe_finish,
-                            shy_indexed_rewrite_fixed,
+                            dummy_temp_addr_read,
+                            shy_addr,
                         },
                 },
             [0x9D] =
@@ -3208,8 +3169,8 @@ const OpDef
                         {
                             read_pc_addr_low,
                             read_pc_addr_high_add_x,
-                            sta_indexed_read_maybe_finish,
-                            sta_indexed_rewrite_fixed,
+                            dummy_temp_addr_read,
+                            sta_addr,
                         },
                 },
             [0x9E] =
@@ -3219,8 +3180,8 @@ const OpDef
                         {
                             read_pc_addr_low,
                             read_pc_addr_high_add_y,
-                            shx_indexed_read_maybe_finish,
-                            shx_indexed_rewrite_fixed,
+                            dummy_temp_addr_read,
+                            shx_addr,
                         },
                 },
             [0x9F] =
@@ -3230,8 +3191,8 @@ const OpDef
                         {
                             read_pc_addr_low,
                             read_pc_addr_high_add_y,
-                            sha_indexed_read_maybe_finish,
-                            sha_indexed_rewrite_fixed,
+                            dummy_temp_addr_read,
+                            sha_addr,
                         },
                 },
             [0xA0] =
