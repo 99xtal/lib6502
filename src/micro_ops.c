@@ -73,6 +73,7 @@ void read_ptr_addr_high_add_y(CPU6502* cpu) {
 void read_pc_addr_low_add_x(CPU6502* cpu) {
   dummy_read(cpu, cpu->op.addr_lo);
   cpu->op.addr_lo += cpu->X;
+  cpu->op.addr = cpu->op.addr_lo;
 }
 
 void read_pc_addr_low_add_y(CPU6502* cpu) {
@@ -1631,6 +1632,18 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x17] =
+                {
+                    .name = "*SLO zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            slo_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x18] =
                 {
                     .name = "CLC",
@@ -1893,6 +1906,19 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x37] =
+                {
+                    .name = "*RLA zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+
+                            read_addr_data,
+                            rla_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x38] =
                 {
                     .name = "SEC",
@@ -2150,6 +2176,18 @@ const OpDef
                             read_pc_addr_low_add_x,
                             read_addr_data,
                             lsr_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0x57] =
+                {
+                    .name = "*SRE zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            sre_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
@@ -2416,6 +2454,18 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0x77] =
+                {
+                    .name = "*RRA zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            rra_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x78] =
                 {
                     .name = "SEI",
@@ -2664,6 +2714,16 @@ const OpDef
                             stx_addr,
                         },
                 },
+            [0x97] =
+                {
+                    .name = "*SAX zp,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_y,
+                            sax_addr,
+                        },
+                },
             [0x98] =
                 {
                     .name = "TYA",
@@ -2886,6 +2946,16 @@ const OpDef
                             read_pc_addr_low,
                             read_pc_addr_low_add_y,
                             ldx_addr,
+                        },
+                },
+            [0xB7] =
+                {
+                    .name = "*LAX zp,Y",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_y,
+                            lax_addr,
                         },
                 },
             [0xB8] =
@@ -3142,6 +3212,18 @@ const OpDef
                             write_data_and_finish,
                         },
                 },
+            [0xD7] =
+                {
+                    .name = "*DCP zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            dcp_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0xD8] =
                 {
                     .name = "CLD",
@@ -3395,6 +3477,18 @@ const OpDef
                             read_pc_addr_low_add_x,
                             read_addr_data,
                             inc_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
+            [0xF7] =
+                {
+                    .name = "*ISC zp,X",
+                    .micro_ops =
+                        {
+                            read_pc_addr_low,
+                            read_pc_addr_low_add_x,
+                            read_addr_data,
+                            isc_dummy_write_and_compute,
                             write_data_and_finish,
                         },
                 },
