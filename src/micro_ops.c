@@ -1192,6 +1192,88 @@ void nop_indexed_read_maybe_finish(CPU6502* cpu) {
 
 void kil_imp(CPU6502* cpu) { cpu->jammed = true; }
 
+void anc_imm(CPU6502* cpu) {
+  // AND
+  uint8_t value = cpu->read(cpu->ctx, cpu->PC++);
+
+  alu_and(cpu, value);
+
+  // set carry as if ASL/ROL was performed
+  uint8_t last_bit = (cpu->A & 0x80) != 0;
+  set_flag(cpu, FLAG_CARRY, last_bit);
+
+  finish_op(cpu);
+}
+
+void alr_imm(CPU6502* cpu) {
+  // AND
+  uint8_t value = read(cpu, cpu->PC++);
+  alu_and(cpu, value);
+
+  // LSR
+  uint8_t result = cpu->A >> 1;
+  set_flag(cpu, FLAG_CARRY, cpu->A & 0x01);
+
+  cpu->A = result;
+
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, 0);
+
+  finish_op(cpu);
+}
+
+void arr_imm(CPU6502* cpu) {
+  // AND
+  uint8_t value = read(cpu, cpu->PC++);
+
+  alu_and(cpu, value);
+
+  uint8_t carry_in = get_flag(cpu, FLAG_CARRY);
+
+  uint8_t result = (cpu->A >> 1) | (carry_in << 7);
+  cpu->A = result;
+
+  set_flag(cpu, FLAG_CARRY, cpu->A & 0x40);
+  set_flag(cpu, FLAG_OVERFLOW, ((cpu->A >> 6) ^ (cpu->A >> 5)) & 1);
+  set_nz(cpu, cpu->A);
+
+  finish_op(cpu);
+}
+
+void xaa_imm(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->PC++);
+
+  cpu->A = cpu->X;
+  set_nz(cpu, cpu->A);
+
+  cpu->A &= value;
+
+  finish_op(cpu);
+}
+
+void lax_imm(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->PC++);
+
+  cpu->A = value;
+  cpu->X = value;
+
+  finish_op(cpu);
+}
+
+void axs_imm(CPU6502* cpu) {
+  uint8_t value = read(cpu, cpu->PC++);
+  uint8_t source = cpu->A & cpu->X;
+  uint8_t result = source - value;
+
+  cpu->X = result;
+
+  set_flag(cpu, FLAG_CARRY, source >= value);
+  set_flag(cpu, FLAG_ZERO, result == 0);
+  set_flag(cpu, FLAG_NEGATIVE, (result & 0x80) != 0);
+
+  finish_op(cpu);
+}
+
 void dummy(CPU6502* cpu) { (void)cpu; }
 
 void dec_sp(CPU6502* cpu) { cpu->SP--; }
@@ -1325,6 +1407,14 @@ const OpDef
                     .micro_ops =
                         {
                             asl_acc,
+                        },
+                },
+            [0x0B] =
+                {
+                    .name = "*ANC imm.",
+                    .micro_ops =
+                        {
+                            anc_imm,
                         },
                 },
             [0x0C] =
@@ -1570,6 +1660,14 @@ const OpDef
                             rol_acc,
                         },
                 },
+            [0x2B] =
+                {
+                    .name = "*ANC imm.",
+                    .micro_ops =
+                        {
+                            anc_imm,
+                        },
+                },
             [0x2C] =
                 {
                     .name = "BIT abs",
@@ -1810,6 +1908,14 @@ const OpDef
                     .micro_ops =
                         {
                             lsr_acc,
+                        },
+                },
+            [0x4B] =
+                {
+                    .name = "*ALR imm.",
+                    .micro_ops =
+                        {
+                            alr_imm,
                         },
                 },
             [0x4C] =
@@ -2054,6 +2160,14 @@ const OpDef
                             ror_acc,
                         },
                 },
+            [0x6B] =
+                {
+                    .name = "*ARR imm.",
+                    .micro_ops =
+                        {
+                            arr_imm,
+                        },
+                },
             [0x6C] =
                 {
                     .name = "JMP indirect",
@@ -2290,6 +2404,14 @@ const OpDef
                             txa_imp,
                         },
                 },
+            [0x8B] =
+                {
+                    .name = "*XAA imm.",
+                    .micro_ops =
+                        {
+                            xaa_imm,
+                        },
+                },
             [0x8C] =
                 {
                     .name = "STY abs",
@@ -2495,6 +2617,14 @@ const OpDef
                     .micro_ops =
                         {
                             tax_imp,
+                        },
+                },
+            [0xAB] =
+                {
+                    .name = "*LAX imm.",
+                    .micro_ops =
+                        {
+                            lax_imm,
                         },
                 },
             [0xAC] =
@@ -2726,6 +2856,14 @@ const OpDef
                     .micro_ops =
                         {
                             dex_imp,
+                        },
+                },
+            [0xCB] =
+                {
+                    .name = "*AXS imm.",
+                    .micro_ops =
+                        {
+                            axs_imm,
                         },
                 },
             [0xCC] =
@@ -2963,6 +3101,14 @@ const OpDef
                     .micro_ops =
                         {
                             nop_imp,
+                        },
+                },
+            [0xEB] =
+                {
+                    .name = "*USBC imm",
+                    .micro_ops =
+                        {
+                            sbc_imm,
                         },
                 },
             [0xEC] =
