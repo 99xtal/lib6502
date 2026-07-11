@@ -1465,6 +1465,20 @@ const OpDef
                             kil_imp,
                         },
                 },
+            [0x03] =
+                {
+                    .name = "*SLO indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            read_addr_data,
+                            slo_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x04] =
                 {
                     .name = "*NOP zp",
@@ -1748,6 +1762,20 @@ const OpDef
                     .micro_ops =
                         {
                             kil_imp,
+                        },
+                },
+            [0x23] =
+                {
+                    .name = "*RLA indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            read_addr_data,
+                            rla_dummy_write_and_compute,
+                            write_data_and_finish,
                         },
                 },
             [0x24] =
@@ -2037,6 +2065,20 @@ const OpDef
                             kil_imp,
                         },
                 },
+            [0x43] =
+                {
+                    .name = "*SRE indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            read_addr_data,
+                            sre_dummy_write_and_compute,
+                            write_data_and_finish,
+                        },
+                },
             [0x44] =
                 {
                     .name = "*NOP zp",
@@ -2319,6 +2361,20 @@ const OpDef
                     .micro_ops =
                         {
                             kil_imp,
+                        },
+                },
+            [0x63] =
+                {
+                    .name = "*RRA indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            read_addr_data,
+                            rra_dummy_write_and_compute,
+                            write_data_and_finish,
                         },
                 },
             [0x64] =
@@ -2604,6 +2660,18 @@ const OpDef
                             nop_imm,
                         },
                 },
+            [0x83] =
+                {
+                    .name = "*SAX indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            sax_addr,
+                        },
+                },
             [0x84] =
                 {
                     .name = "STY zp",
@@ -2846,6 +2914,18 @@ const OpDef
                     .micro_ops =
                         {
                             ldx_imm,
+                        },
+                },
+            [0xA3] =
+                {
+                    .name = "*LAX indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            lax_addr,
                         },
                 },
             [0xA4] =
@@ -3112,6 +3192,20 @@ const OpDef
                     .micro_ops =
                         {
                             nop_imm,
+                        },
+                },
+            [0xC3] =
+                {
+                    .name = "*DCP indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            read_addr_data,
+                            dcp_dummy_write_and_compute,
+                            write_data_and_finish,
                         },
                 },
             [0xC4] =
@@ -3392,6 +3486,20 @@ const OpDef
                     .micro_ops =
                         {
                             nop_imm,
+                        },
+                },
+            [0xE3] =
+                {
+                    .name = "*ISC indexed ind.",
+                    .micro_ops =
+                        {
+                            fetch_ptr,
+                            read_ptr_add_x,
+                            read_ptr_addr_low,
+                            read_ptr_addr_high,
+                            read_addr_data,
+                            isc_dummy_write_and_compute,
+                            write_data_and_finish,
                         },
                 },
             [0xE4] =
